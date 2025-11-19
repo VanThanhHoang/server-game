@@ -1,0 +1,16 @@
+# Node.js
+node_modules/
+npm-debug.log*
+.env
+*.log
+pids
+*.pid
+*.seed
+*.sessa
+.DS_Store
+.vscode/
+.idea/
+coverage/
+dist/
+build/
+tmp/

@@ -1,0 +1,809 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Bảng Điều Khiển Game</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      padding: 20px;
+      min-height: 100vh;
+    }
+
+    .container {
+      max-width: 900px;
+      margin: 0 auto;
+      background: white;
+      border-radius: 15px;
+      padding: 30px;
+      box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+    }
+
+    h1 {
+      color: #333;
+      margin-bottom: 30px;
+      text-align: center;
+    }
+
+    .section {
+      margin-bottom: 30px;
+      padding: 20px;
+      background: #f8f9fa;
+      border-radius: 10px;
+    }
+
+    .section h2 {
+      color: #555;
+      margin-bottom: 15px;
+      font-size: 18px;
+    }
+
+    .form-group {
+      margin-bottom: 15px;
+    }
+
+    label {
+      display: block;
+      margin-bottom: 5px;
+      color: #666;
+      font-weight: bold;
+    }
+
+    input, select {
+      width: 100%;
+      padding: 10px;
+      border: 2px solid #ddd;
+      border-radius: 5px;
+      font-size: 14px;
+    }
+
+    input:focus, select:focus {
+      outline: none;
+      border-color: #667eea;
+    }
+
+    .button-group {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      gap: 10px;
+      margin-top: 20px;
+    }
+
+    button {
+      padding: 12px 20px;
+      border: none;
+      border-radius: 5px;
+      font-size: 14px;
+      font-weight: bold;
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+
+    .btn-primary {
+      background: #667eea;
+      color: white;
+    }
+
+    .btn-primary:hover {
+      background: #5568d3;
+      transform: translateY(-2px);
+    }
+
+    .btn-success {
+      background: #28a745;
+      color: white;
+    }
+
+    .btn-success:hover {
+      background: #218838;
+      transform: translateY(-2px);
+    }
+
+    .btn-danger {
+      background: #dc3545;
+      color: white;
+    }
+
+    .btn-danger:hover {
+      background: #c82333;
+      transform: translateY(-2px);
+    }
+
+    .btn-info {
+      background: #17a2b8;
+      color: white;
+    }
+
+    .btn-info:hover {
+      background: #138496;
+      transform: translateY(-2px);
+    }
+
+    .btn-warning {
+      background: #ffc107;
+      color: #333;
+    }
+
+    .btn-warning:hover {
+      background: #e0a800;
+      transform: translateY(-2px);
+    }
+
+    .status {
+      padding: 10px;
+      border-radius: 5px;
+      margin-top: 10px;
+      font-weight: bold;
+    }
+
+    .status.connected {
+      background: #d4edda;
+      color: #155724;
+    }
+
+    .status.disconnected {
+      background: #f8d7da;
+      color: #721c24;
+    }
+
+    .test-section {
+      background: #fff3cd;
+    }
+
+    .auto-section {
+      background: #e7f3ff;
+    }
+
+    .checkbox-group {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .checkbox-group input[type="checkbox"] {
+      width: auto;
+    }
+
+    .inline-group {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+
+    .player-list {
+      max-height: 200px;
+      overflow-y: auto;
+      background: white;
+      padding: 10px;
+      border-radius: 5px;
+      margin-top: 10px;
+    }
+
+    .player-item {
+      padding: 8px;
+      border-bottom: 1px solid #eee;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .player-item:last-child {
+      border-bottom: none;
+    }
+
+    .player-avatar {
+      width: 30px;
+      height: 30px;
+      border-radius: 50%;
+    }
+
+    .log-section {
+      max-height: 150px;
+      overflow-y: auto;
+      background: #f8f9fa;
+      padding: 10px;
+      border-radius: 5px;
+      font-family: monospace;
+      font-size: 12px;
+    }
+
+    .log-item {
+      padding: 3px 0;
+      color: #666;
+    }
+
+    .log-item.success {
+      color: #28a745;
+    }
+
+    .log-item.error {
+      color: #dc3545;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>🎮 Bảng Điều Khiển Game</h1>
+
+    <div class="section">
+      <h2>📡 Trạng Thái Kết Nối</h2>
+      <div id="status" class="status disconnected">Chưa kết nối</div>
+      <div style="margin-top: 10px;">
+        <strong>ID Phòng:</strong> <span id="roomId">-</span>
+      </div>
+      <div style="margin-top: 5px;">
+        <strong>Trạng thái Game:</strong> <span id="gameState">-</span>
+      </div>
+      <div style="margin-top: 5px;">
+        <strong>Số người chơi:</strong> <span id="playersCount">0</span>
+      </div>
+    </div>
+
+    <div class="section">
+      <h2>⚙️ Cấu Hình Game</h2>
+      
+      <div class="form-group">
+        <label>ID Phòng:</label>
+        <input type="text" id="inputRoomId" value="test-room-123" />
+      </div>
+
+      <div class="form-group">
+        <label>Chủ đề:</label>
+        <select id="theme">
+          <!-- <option value="duck">Vịt 🦆</option>
+          <option value="horse">Ngựa 🐴</option>
+          <option value="cow">Bò 🐄</option> -->
+          <option value="unicorn">Kỳ Lân 🦄</option>
+          <!-- <option value="car">Xe Hơi 🚗</option>
+          <option value="bear">Gấu 🐻</option> -->
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label>Từ khóa:</label>
+        <input type="text" id="keyword" value="streammix" />
+      </div>
+
+      <div class="form-group">
+        <label>Chế độ chơi:</label>
+        <select id="mode">
+          <option value="random">Ngẫu nhiên</option>
+          <option value="score">Tính điểm</option>
+        </select>
+      </div>
+
+      <div class="inline-group">
+        <div class="form-group">
+          <label>Thời gian (GG:PP:SS):</label>
+          <input type="text" id="timer" value="00:00:30" />
+        </div>
+
+        <div class="form-group">
+          <label>Số người thắng:</label>
+          <input type="number" id="winnersCount" value="3" min="1" max="10" />
+        </div>
+      </div>
+
+      <div class="inline-group">
+        <div class="form-group">
+          <label>Số người tối đa:</label>
+          <input type="number" id="maxCharacters" value="50" min="1" max="1000" />
+        </div>
+
+        <div class="form-group">
+          <label>Âm lượng (0-100):</label>
+          <input type="number" id="volume" value="50" min="0" max="100" />
+        </div>
+      </div>
+
+      <div class="form-group checkbox-group">
+        <input type="checkbox" id="enableSound" checked />
+        <label for="enableSound" style="margin-bottom: 0;">Bật âm thanh</label>
+      </div>
+
+      <button class="btn-primary" onclick="saveConfig()">💾 Lưu Cấu Hình</button>
+    </div>
+
+    <div class="section">
+      <h2>🎯 Điều Khiển Game</h2>
+      <div class="button-group">
+        <button class="btn-success" onclick="initGame()">🎬 Khởi Tạo</button>
+        <button class="btn-success" onclick="runGame()">▶️ Bắt Đầu</button>
+        <button class="btn-danger" onclick="resetGame()">🔄 Làm Mới</button>
+        <button class="btn-info" onclick="showTopWinners()">🏆 Top Thắng</button>
+        <button class="btn-info" onclick="showResultList()">📋 Kết Quả</button>
+      </div>
+    </div>
+
+
+    <div class="section auto-section">
+      <h2>🤖 Tự Động Thêm Người Chơi</h2>
+      
+      <div class="inline-group">
+        <div class="form-group">
+          <label>Số lượng người:</label>
+          <input type="number" id="autoPlayerCount" value="10" min="1" max="50" />
+        </div>
+
+        <div class="form-group">
+          <label>Khoảng thời gian (ms):</label>
+          <input type="number" id="autoInterval" value="1000" min="100" max="5000" step="100" />
+        </div>
+      </div>
+
+      <div class="button-group">
+        <button class="btn-warning" onclick="addRandomPlayers()">🎲 Thêm Ngẫu Nhiên</button>
+        <!-- <button class="btn-warning" onclick="startAutoAddPlayers()">▶️ Bắt Đầu Tự Động</button>
+        <button class="btn-danger" onclick="stopAutoAddPlayers()">⏹️ Dừng Tự Động</button> -->
+        <button class="btn-info" onclick="clearAllPlayers()">🗑️ Xóa Tất Cả</button>
+      </div>
+
+      <div style="margin-top: 15px;">
+        <strong>Danh sách người chơi đã thêm:</strong>
+        <div id="playerList" class="player-list"></div>
+      </div>
+    </div>
+
+    <div class="section">
+      <h2>📊 Nhật Ký Hoạt Động</h2>
+      <div id="logSection" class="log-section">
+        <div class="log-item">Sẵn sàng...</div>
+      </div>
+      <button class="btn-info" onclick="clearLogs()" style="margin-top: 10px;">🗑️ Xóa Nhật Ký</button>
+    </div>
+  </div>
+
+  <script src="/socket.io/socket.io.js"></script>
+  <script>
+    const API_BASE_URL = 'http://localhost:8182';
+    const socket = io(API_BASE_URL);
+    let currentRoomId = document.getElementById('inputRoomId').value;
+    let gameState = {
+      state: 'pending',
+      count: 0
+    };
+    let autoAddInterval = null;
+    let addedPlayers = [];
+
+    // Danh sách tên tiếng Việt
+    const vietnameseNames = [
+      'Nguyễn Văn An', 'Trần Thị Bình', 'Lê Hoàng Cường', 'Phạm Thị Dung',
+      'Hoàng Văn Em', 'Đặng Thị Phương', 'Vũ Minh Giang', 'Bùi Thị Hà',
+      'Đỗ Văn Hùng', 'Ngô Thị Lan', 'Dương Văn Khoa', 'Phan Thị Linh',
+      'Mai Văn Minh', 'Trương Thị Nga', 'Lý Văn Nhân', 'Võ Thị Oanh',
+      'Tạ Văn Phúc', 'Đinh Thị Quỳnh', 'Chu Văn Sang', 'Đoàn Thị Thảo',
+      'Hồ Văn Thắng', 'Lưu Thị Uyên', 'Cao Văn Vinh', 'Thái Thị Xuân',
+      'Tô Văn Yên', 'Kiều Thị Hương', 'La Văn Tuấn', 'Ma Thị Mai',
+      'Nghiêm Văn Nam', 'Ông Thị Phượng', 'Quan Văn Quang', 'Tống Thị Rạng',
+      'Ung Văn Sơn', 'Văn Thị Tâm', 'Xa Văn Trung', 'Yên Thị Ngọc',
+      'Điền Văn Đức', 'Âu Thị Hằng', 'Bạch Văn Hải', 'Cam Thị Kim',
+      'Đan Văn Long', 'Gia Thị Mỹ', 'Hà Văn Phong', 'Hoa Thị Thanh',
+      'La Văn Bình', 'Mai Thị Chi', 'Nhữ Văn Đạt', 'Phùng Thị Hiền',
+      'Quách Văn Hưng', 'Sử Thị Khánh', 'Tân Văn Lâm', 'Ứng Thị Minh'
+    ];
+
+    const platforms = ['facebook', 'youtube', 'tiktok'];
+
+    // Socket connection
+    socket.on('connect', () => {
+      updateStatus(true);
+      addLog('Đã kết nối đến server', 'success');
+      subscribeToRoom();
+    });
+
+    socket.on('disconnect', () => {
+      updateStatus(false);
+      addLog('Mất kết nối với server', 'error');
+    });
+
+    // Lắng nghe trạng thái game từ Game View
+    socket.on('onDucky', (data) => {
+      console.log('Received action from Game View/Server:', data);
+      
+      if (data.action === 'pingController') {
+        gameState = data.data;
+        updateGameInfo();
+      }
+      
+      if (data.action === 'changeGameStage') {
+        gameState.state = data.data;
+        updateGameInfo();
+      }
+      
+      if (data.action === 'addedCharacter') {
+        gameState.count = data.data;
+        updateGameInfo();
+      }
+      
+      // Hiển thị log cho các lệnh điều khiển được gửi đi
+      if (['initGame', 'runGame', 'resetGame', 'showTopWinners', 'showResultList'].includes(data.action)) {
+          addLog(`Server đã phản hồi lệnh điều khiển: ${data.action}`, 'success');
+      }
+      
+    });
+
+    function updateStatus(connected) {
+      const statusEl = document.getElementById('status');
+      if (connected) {
+        statusEl.textContent = 'Đã kết nối';
+        statusEl.className = 'status connected';
+      } else {
+        statusEl.textContent = 'Chưa kết nối';
+        statusEl.className = 'status disconnected';
+      }
+    }
+
+    function updateGameInfo() {
+      document.getElementById('gameState').textContent = gameState.state || '-';
+      document.getElementById('playersCount').textContent = gameState.count || 0;
+    }
+
+    function addLog(message, type = '') {
+      const logSection = document.getElementById('logSection');
+      const logItem = document.createElement('div');
+      logItem.className = `log-item ${type}`;
+      const time = new Date().toLocaleTimeString('vi-VN');
+      logItem.textContent = `[${time}] ${message}`;
+      logSection.appendChild(logItem);
+      logSection.scrollTop = logSection.scrollHeight;
+    }
+
+    function clearLogs() {
+      document.getElementById('logSection').innerHTML = '<div class="log-item">Sẵn sàng...</div>';
+    }
+
+    function subscribeToRoom() {
+      currentRoomId = document.getElementById('inputRoomId').value;
+      
+      // Control Panel Subscribe để nhận các thông báo chung của phòng (room.config)
+      socket.emit('call', 'live.subscribe', { id: currentRoomId }, (error) => {
+        if (error) {
+          console.error('Subscribe error:', error);
+          addLog('Lỗi khi subscribe phòng', 'error');
+        } else {
+          console.log('Subscribed to room:', currentRoomId);
+          document.getElementById('roomId').textContent = currentRoomId;
+          addLog(`Đã subscribe vào phòng: ${currentRoomId}`, 'success');
+          // Sau khi subscribe, gửi ping để Game View gửi trạng thái ngược lại
+          sendAction('pingGameView');
+        }
+      });
+    }
+
+    async function saveConfig() {
+      const config = {
+        theme: document.getElementById('theme').value,
+        keyword: document.getElementById('keyword').value,
+        mode: document.getElementById('mode').value,
+        timer: document.getElementById('timer').value,
+        winnersCount: parseInt(document.getElementById('winnersCount').value),
+        maxCharacters: parseInt(document.getElementById('maxCharacters').value),
+        volume: parseInt(document.getElementById('volume').value),
+        enableSound: document.getElementById('enableSound').checked,
+        scoresForLike: 1,
+        scoresForComment: 5,
+        scoresForCent: 20
+      };
+
+      try {
+        const response = await fetch(`${API_BASE_URL}/api/room/update-config`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            room: currentRoomId,
+            config: config
+          })
+        });
+
+        const result = await response.json();
+        console.log('Config saved:', result);
+        addLog('Đã lưu cấu hình thành công', 'success');
+        alert('Đã lưu cấu hình thành công!');
+      } catch (error) {
+        console.error('Error saving config:', error);
+        addLog('Lỗi khi lưu cấu hình', 'error');
+        alert('Lỗi khi lưu cấu hình');
+      }
+    }
+
+    // Hàm gửi lệnh điều khiển đến server (Server sẽ phát lại đến Game View)
+    function sendAction(action, data = null) {
+      socket.emit('call', 'load-comment.ducky', {
+        room: currentRoomId,
+        config: { action, data }
+      }, (error) => {
+        if (error) {
+          console.error('Action error:', error);
+          addLog(`Lỗi khi gửi action: ${action}`, 'error');
+        } else {
+          console.log('Action sent:', action);
+          addLog(`Đã gửi action: ${action}`, 'info');
+        }
+      });
+    }
+
+    function initGame() {
+      sendAction('initGame');
+    }
+
+    function runGame() {
+      sendAction('runGame');
+    }
+
+    function resetGame() {
+      if (confirm('Bạn có chắc muốn làm mới game không?')) {
+        sendAction('resetGame');
+        addLog('Gửi lệnh reset game', 'info');
+        addedPlayers = [];
+        updatePlayerList();
+        
+        // Gọi API để xóa dữ liệu trên Server (tùy chọn)
+        fetch(`${API_BASE_URL}/api/room/${currentRoomId}/reset`, { method: 'POST' });
+      }
+    }
+
+    function showTopWinners() {
+      sendAction('showTopWinners', true);
+    }
+
+    function showResultList() {
+      sendAction('showResultList', true);
+    }
+
+    function getRandomName() {
+      return vietnameseNames[Math.floor(Math.random() * vietnameseNames.length)];
+    }
+
+    function getRandomPlatform() {
+      return platforms[Math.floor(Math.random() * platforms.length)];
+    }
+
+    async function addTestComment() {
+      const playerName = document.getElementById('testPlayerName').value;
+      const commentText = document.getElementById('testComment').value;
+      
+      const comment = {
+        author: {
+          id: 'test-user-' + Date.now(),
+          name: playerName,
+          avatar: `https://ui-avatars.com/api/?name=${encodeURIComponent(playerName)}&background=random`
+        },
+        platform: {
+          name: 'facebook'
+        },
+        text: commentText,
+      };
+
+      try {
+        await fetch(`${API_BASE_URL}/api/test/add-comment`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            room: currentRoomId,
+            comment: comment
+          })
+        });
+        addLog(`Đã thêm comment từ ${playerName}`, 'success');
+        addedPlayers.push(comment);
+        updatePlayerList();
+      } catch (error) {
+        console.error('Error adding test comment:', error);
+        addLog('Lỗi khi thêm comment', 'error');
+      }
+    }
+
+    async function addRandomComment() {
+      const playerName = getRandomName();
+      const platform = getRandomPlatform();
+      const commentText = document.getElementById('keyword').value || 'streammix';
+      
+      const comment = {
+        author: {
+          id: 'player-' + Date.now() + '-' + Math.random(),
+          name: playerName,
+          avatar: `https://ui-avatars.com/api/?name=${encodeURIComponent(playerName)}&background=random`
+        },
+        platform: {
+          name: platform
+        },
+        text: commentText,
+      };
+
+      try {
+        await fetch(`${API_BASE_URL}/api/test/add-comment`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            room: currentRoomId,
+            comment: comment
+          })
+        });
+        addLog(`✅ Đã thêm ${playerName} (${platform})`, 'success');
+        addedPlayers.push(comment);
+        updatePlayerList();
+        return true;
+      } catch (error) {
+        console.error('Error adding random comment:', error);
+        addLog('❌ Lỗi khi thêm người chơi', 'error');
+        return false;
+      }
+    }
+
+    async function addRandomPlayers() {
+      const count = parseInt(document.getElementById('autoPlayerCount').value);
+      const interval = parseInt(document.getElementById('autoInterval').value);
+      
+      addLog(`Bắt đầu thêm ${count} người chơi ngẫu nhiên...`);
+      
+      for (let i = 0; i < count; i++) {
+        if (gameState.count >= parseInt(document.getElementById('maxCharacters').value)) {
+            addLog('Đã đạt số lượng người chơi tối đa!', 'warning');
+            break;
+        }
+        await addRandomComment();
+        await new Promise(resolve => setTimeout(resolve, interval));
+      }
+      
+      addLog(`Đã hoàn thành thêm người chơi`, 'success');
+    }
+
+    function startAutoAddPlayers() {
+      if (autoAddInterval) {
+        addLog('Chế độ tự động đã đang chạy', 'error');
+        return;
+      }
+      
+      const interval = parseInt(document.getElementById('autoInterval').value);
+      
+      addLog('Bắt đầu chế độ tự động thêm người chơi', 'success');
+      
+      autoAddInterval = setInterval(() => {
+        if (gameState.count >= parseInt(document.getElementById('maxCharacters').value)) {
+             addLog('Đã đạt số lượng người chơi tối đa, dừng tự động.', 'warning');
+             stopAutoAddPlayers();
+             return;
+        }
+        addRandomComment();
+      }, interval);
+    }
+
+    function stopAutoAddPlayers() {
+      if (autoAddInterval) {
+        clearInterval(autoAddInterval);
+        autoAddInterval = null;
+        addLog('Đã dừng chế độ tự động', 'success');
+      } else {
+        addLog('Chế độ tự động chưa chạy', 'error');
+      }
+    }
+
+    function clearAllPlayers() {
+      if (confirm('Bạn có chắc muốn xóa danh sách người chơi (chỉ trên Control Panel) và reset game không?')) {
+        addedPlayers = [];
+        updatePlayerList();
+        addLog('Đã xóa danh sách người chơi (Control Panel)', 'success');
+        resetGame(); // Gửi lệnh reset game
+      }
+    }
+
+    function updatePlayerList() {
+      const playerList = document.getElementById('playerList');
+      
+      if (addedPlayers.length === 0) {
+        playerList.innerHTML = '<div style="text-align: center; color: #999; padding: 20px;">Chưa có người chơi nào</div>';
+        return;
+      }
+      
+      playerList.innerHTML = addedPlayers.slice().reverse().slice(0, 50).map((player) => {
+          const author = player.author || addedPlayers.author;
+          const platformName = player.platform?.name || 'Unknown';
+          const text = player.text || 'N/A';
+          return `
+            <div class="player-item">
+              <img src="${author.avatar}" class="player-avatar" alt="${author.name}">
+              <div style="flex: 1;">
+                <strong>${author.name}</strong>
+                <div style="font-size: 11px; color: #999;">${platformName} • ${text}</div>
+              </div>
+            </div>
+          `;
+      }).join('');
+    }
+
+    async function addTestLike() {
+      // Logic tìm player đã thêm để gửi reaction (dùng addedPlayers cho tiện test)
+      if (addedPlayers.length === 0) {
+        addLog('Chưa có người chơi nào để thêm like', 'error');
+        return;
+      }
+
+      const randomPlayer = addedPlayers[Math.floor(Math.random() * addedPlayers.length)];
+      
+      const reaction = {
+        author: {
+          id: randomPlayer.author.id
+        },
+        reaction: 'LIKE',
+        metadata: {
+          likeCount: 1
+        },
+      };
+
+      try {
+        await fetch(`${API_BASE_URL}/api/reactions/add`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            room: currentRoomId,
+            author: reaction.author,
+            reaction: reaction.reaction,
+            metadata: reaction.metadata
+          })
+        });
+        addLog(`👍 Đã thêm like cho ${randomPlayer.author.name}`, 'success');
+      } catch (error) {
+        console.error('Error adding test like:', error);
+        addLog('Lỗi khi thêm like', 'error');
+      }
+    }
+
+    async function addTestDonation() {
+      if (addedPlayers.length === 0) {
+        addLog('Chưa có người chơi nào để thêm donation', 'error');
+        return;
+      }
+
+      const randomPlayer = addedPlayers[Math.floor(Math.random() * addedPlayers.length)];
+      const amount = Math.floor(Math.random() * 10) + 1;
+      
+      const reaction = {
+        author: {
+          id: randomPlayer.author.id
+        },
+        reaction: 'tiktok-donation',
+        metadata: {
+          giftInfo: {
+            cost: amount
+          }
+        },
+      };
+
+      try {
+        await fetch(`${API_BASE_URL}/api/reactions/add`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            room: currentRoomId,
+            author: reaction.author,
+            reaction: reaction.reaction,
+            metadata: reaction.metadata
+          })
+        });
+        addLog(`💰 Đã thêm ${amount} coin cho ${randomPlayer.author.name}`, 'success');
+      } catch (error) {
+        console.error('Error adding test donation:', error);
+        addLog('Lỗi khi thêm donation', 'error');
+      }
+    }
+
+    // Initialize
+    document.getElementById('inputRoomId').addEventListener('change', subscribeToRoom);
+    
+    // Auto update player list
+    updatePlayerList();
+
+    // Cleanup on page unload
+    window.addEventListener('beforeunload', () => {
+      stopAutoAddPlayers();
+    });
+  </script>
+</body>
+</html>
