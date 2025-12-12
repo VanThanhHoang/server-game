@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Facebook Live Comments</title>
+    <link rel="stylesheet" href="/showcmt.css">
+</head>
+
+<body>
+
+    <div id="comments-container"></div>
+
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+        // Get room from URL parameter, default to 'default'
+        const urlParams = new URLSearchParams(window.location.search);
+        const roomId = urlParams.get('room') || 'default';
+
+        // Connect to Socket.IO
+        const socket = io();
+        const container = document.getElementById('comments-container');
+        const statusIndicator = document.getElementById('status-indicator');
+        const statusText = document.getElementById('status-text');
+        const commentCountEl = document.getElementById('comment-count');
+
+        const MAX_COMMENTS = 250;
+        const MAX_PINNED = 2;
+        let commentCount = 0;
+        let allComments = new Map(); // Store all comments by ID
+        let pinnedCommentIds = new Set(); // Track pinned comment IDs
+
+        // Join room
+        socket.emit('call', 'live.subscribe', { id: roomId }, (err) => {
+            if (err) {
+                console.error('Failed to join room:', err);
+                updateStatus('error', 'Failed to connect');
+            } else {
+                console.log('✅ Joined room:', roomId);
+                updateStatus('connected', `Connected to room: ${roomId}`);
+            }
+        });
+
+        // Listen for Facebook comments
+        socket.on('facebook_comment', (comments) => {
+            console.log('Received comments:', comments);
+            comments.forEach(comment => {
+                // Filter out system/error comments - don't show to users
+                if (comment.metadata?.isError || comment.platform?.name === 'system') {
+                    return; // Skip error messages in user view
+                }
+
+                allComments.set(comment.id, comment);
+                addComment(comment);
+            });
+
+            // Limit total comments to MAX_COMMENTS (250) to prevent lag
+            cleanupOldComments();
+        });
+
+        // Listen for pin/unpin events from dashboard
+        socket.on('pin_comment', (data) => {
+            console.log('Pin event:', data);
+            const { commentId, pinned } = data;
+
+            if (pinned) {
+                // Check if we already have max pinned
+                if (pinnedCommentIds.size >= MAX_PINNED) {
+                    // Remove oldest pinned comment
+                    const oldestPinned = Array.from(pinnedCommentIds)[0];
+                    pinnedCommentIds.delete(oldestPinned);
+                }
+                pinnedCommentIds.add(commentId);
+            } else {
+                pinnedCommentIds.delete(commentId);
+            }
+
+            renderAllComments();
+        });
+
+        socket.on('connect', () => {
+            console.log('✅ Socket connected');
+            updateStatus('connected', `Connected to room: ${roomId}`);
+        });
+
+        socket.on('disconnect', () => {
+            console.log('❌ Socket disconnected');
+            updateStatus('disconnected', 'Disconnected');
+        });
+
+        socket.on('error', (error) => {
+            console.error('Socket error:', error);
+            updateStatus('error', 'Connection error');
+        });
+
+        function updateStatus(status, text) {
+            statusText.textContent = text;
+            statusIndicator.className = status;
+        }
+
+        function addComment(comment) {
+            // If comment already exists, don't add again
+            const existingComment = container.querySelector(`[data-comment-id="${comment.id}"]`);
+            if (existingComment) {
+                return;
+            }
+
+            // Create comment element
+            const commentEl = createCommentElement(comment);
+
+            // Insert at the TOP (prepend) - but after pinned comments
+            const firstUnpinnedComment = container.querySelector('.comment:not(.pinned)');
+            if (firstUnpinnedComment) {
+                container.insertBefore(commentEl, firstUnpinnedComment);
+            } else {
+                container.appendChild(commentEl);
+            }
+
+            // Trigger animation
+            setTimeout(() => {
+                commentEl.classList.add('show');
+            }, 10);
+
+            // Update count
+            commentCount++;
+
+            removeExcessComments();
+
+            // Scroll to top to show new comment
+            container.scrollTop = 0;
+        }
+
+        function createCommentElement(comment) {
+            const commentEl = document.createElement('div');
+            commentEl.className = 'comment';
+            commentEl.setAttribute('data-comment-id', comment.id);
+
+            if (pinnedCommentIds.has(comment.id)) {
+                commentEl.classList.add('pinned');
+            }
+
+            commentEl.innerHTML = `
+                <div class="comment-avatar">
+                    <img class="noel_hat" src="./assets/noel_hat.png"/>
+                    <img class="avt" src="${comment.author.avatar || 'https://ui-avatars.com/api/?name=' + encodeURIComponent(comment.author.name)}" 
+                         alt="${escapeHtml(comment.author.name)}"
+                         onerror="this.src='https://ui-avatars.com/api/?name=${encodeURIComponent(comment.author.name)}'">
+                </div>
+                <div class="comment-content">
+                    <div class="comment-header">
+                        <span class="comment-name">${escapeHtml(comment.author.name)}</span>
+                    </div>
+                    <div class="comment-message">${escapeHtml(comment.text)}</div>
+                </div>
+            `;
+
+            return commentEl;
+        }
+
+        function renderAllComments() {
+            // Clear container
+            container.innerHTML = '';
+
+            // Get all comments as array (filter out errors)
+            const commentsArray = Array.from(allComments.values())
+                .filter(c => !c.metadata?.isError && c.platform?.name !== 'system');
+
+            // Separate pinned and unpinned
+            const pinned = commentsArray.filter(c => pinnedCommentIds.has(c.id));
+            const unpinned = commentsArray.filter(c => !pinnedCommentIds.has(c.id));
+
+            // Sort pinned by timestamp (newest first)
+            pinned.sort((a, b) => b.timestamp - a.timestamp);
+
+            // Limit to MAX_PINNED
+            const limitedPinned = pinned.slice(0, MAX_PINNED);
+
+            // Sort unpinned by timestamp (newest first)
+            unpinned.sort((a, b) => b.timestamp - a.timestamp);
+
+            // Render pinned first, then unpinned
+            [...limitedPinned, ...unpinned].forEach(comment => {
+                const commentEl = createCommentElement(comment);
+                commentEl.classList.add('show'); // Already visible
+                container.appendChild(commentEl);
+            });
+
+            // Update count
+            commentCountEl.textContent = `${allComments.size} comment${allComments.size !== 1 ? 's' : ''}`;
+        }
+
+        function removeExcessComments() {
+            const comments = container.querySelectorAll('.comment:not(.pinned)');
+            if (comments.length > MAX_COMMENTS) {
+                for (let i = MAX_COMMENTS; i < comments.length; i++) {
+                    const commentId = comments[i].getAttribute('data-comment-id');
+                    allComments.delete(commentId);
+                    comments[i].remove();
+                }
+            }
+        }
+
+        function cleanupOldComments() {
+            // Get all unpinned, non-error comments sorted by timestamp (oldest first)
+            const unpinnedComments = Array.from(allComments.values())
+                .filter(c => !pinnedCommentIds.has(c.id) && !c.metadata?.isError && c.platform?.name !== 'system')
+                .sort((a, b) => a.timestamp - b.timestamp);
+
+            // If we have more than MAX_COMMENTS unpinned comments, remove oldest
+            if (unpinnedComments.length > MAX_COMMENTS) {
+                const toRemove = unpinnedComments.slice(0, unpinnedComments.length - MAX_COMMENTS);
+                toRemove.forEach(comment => {
+                    allComments.delete(comment.id);
+                    // Remove from DOM if exists
+                    const commentEl = container.querySelector(`[data-comment-id="${comment.id}"]`);
+                    if (commentEl) {
+                        commentEl.remove();
+                    }
+                });
+                console.log(`🗑️ Cleaned up ${toRemove.length} old comments to prevent lag`);
+            }
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        function formatTime(timestamp) {
+            const date = new Date(timestamp);
+            const now = new Date();
+            const diff = Math.floor((now - date) / 1000); // seconds
+
+            if (diff < 60) return 'Just now';
+            if (diff < 3600) return `${Math.floor(diff / 60)}m ago`;
+            if (diff < 86400) return `${Math.floor(diff / 3600)}h ago`;
+            return date.toLocaleDateString('vi-VN');
+        }
+    </script>
+</body>
+
+</html>

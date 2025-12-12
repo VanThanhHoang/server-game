@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="vi">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -24,7 +25,7 @@
       background: white;
       border-radius: 15px;
       padding: 30px;
-      box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
     }
 
     h1 {
@@ -57,15 +58,20 @@
       font-weight: bold;
     }
 
-    input, select {
+    input,
+    select,
+    textarea {
       width: 100%;
       padding: 10px;
       border: 2px solid #ddd;
       border-radius: 5px;
       font-size: 14px;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     }
 
-    input:focus, select:focus {
+    input:focus,
+    select:focus,
+    textarea:focus {
       outline: none;
       border-color: #667eea;
     }
@@ -227,29 +233,416 @@
     .log-item.error {
       color: #dc3545;
     }
+
+    /* Comment Item Styles */
+    .comment-item {
+      display: flex;
+      gap: 10px;
+      padding: 12px;
+      background: #f8f9fa;
+      border-radius: 8px;
+      border: 1px solid #e0e0e0;
+      transition: all 0.2s;
+      position: relative;
+    }
+
+    .comment-item:hover {
+      background: #e9ecef;
+      border-color: #667eea;
+      transform: translateX(2px);
+    }
+
+    .comment-item.pinned {
+      background: #fff3cd;
+      border-color: #ffc107;
+    }
+
+    .comment-avatar {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      object-fit: cover;
+      flex-shrink: 0;
+    }
+
+    .comment-content {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .comment-header {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 4px;
+    }
+
+    .comment-author {
+      font-weight: 600;
+      color: #333;
+      font-size: 14px;
+    }
+
+    .comment-time {
+      font-size: 11px;
+      color: #999;
+    }
+
+    .comment-text {
+      color: #555;
+      font-size: 13px;
+      word-wrap: break-word;
+      margin-bottom: 4px;
+    }
+
+    .comment-id {
+      font-size: 10px;
+      color: #aaa;
+      font-family: monospace;
+    }
+
+    .pin-button {
+      padding: 6px 12px;
+      background: white;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 16px;
+      transition: all 0.2s;
+      flex-shrink: 0;
+    }
+
+    .pin-button:hover {
+      background: #ffc107;
+      border-color: #ffc107;
+      transform: scale(1.1);
+    }
+
+    .pin-button.pinned {
+      background: #ffc107;
+      border-color: #ffc107;
+    }
+
+    /* Error/System comment styling for dashboard */
+    .comment-item.error {
+      background: linear-gradient(135deg, #ffe5e5 0%, #ffcccc 100%);
+      border: 2px solid #dc3545;
+      box-shadow: 0 4px 15px rgba(220, 53, 69, 0.3);
+      animation: errorPulse 2s ease-in-out infinite;
+    }
+
+    .comment-item.error .comment-author {
+      color: #dc3545;
+      font-weight: 700;
+      font-size: 15px;
+    }
+
+    .comment-item.error .comment-text {
+      color: #721c24;
+      font-weight: 500;
+      white-space: pre-line;
+      font-size: 14px;
+    }
+
+    .comment-item.error::before {
+      content: '⚠️';
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      font-size: 20px;
+      animation: shake 0.5s ease-in-out infinite;
+    }
+
+    @keyframes errorPulse {
+
+      0%,
+      100% {
+        box-shadow: 0 4px 15px rgba(220, 53, 69, 0.3);
+      }
+
+      50% {
+        box-shadow: 0 4px 25px rgba(220, 53, 69, 0.5);
+      }
+    }
+
+    @keyframes shake {
+
+      0%,
+      100% {
+        transform: translateX(0);
+      }
+
+      25% {
+        transform: translateX(-2px);
+      }
+
+      75% {
+        transform: translateX(2px);
+      }
+    }
+
+    #commentListContainer::-webkit-scrollbar {
+      width: 8px;
+    }
+
+    #commentListContainer::-webkit-scrollbar-track {
+      background: #f1f1f1;
+      border-radius: 10px;
+    }
+
+    #commentListContainer::-webkit-scrollbar-thumb {
+      background: #888;
+      border-radius: 10px;
+    }
+
+    #commentListContainer::-webkit-scrollbar-thumb:hover {
+      background: #555;
+    }
+
+    /* Game State Visualization Styles */
+    .game-state-panel {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      width: 280px;
+      background: rgba(255, 255, 255, 0.95);
+      backdrop-filter: blur(10px);
+      padding: 15px;
+      border-radius: 12px;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
+      z-index: 1000;
+      border: 2px solid rgba(102, 126, 234, 0.2);
+    }
+
+    .game-state-panel h2 {
+      font-size: 14px;
+      margin-bottom: 12px;
+      color: #333;
+      text-align: center;
+      border-bottom: 2px solid #667eea;
+      padding-bottom: 8px;
+    }
+
+    .state-indicator {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 10px;
+      background: white;
+      border-radius: 6px;
+      margin-bottom: 6px;
+      border-left: 4px solid #ccc;
+      transition: all 0.3s;
+      opacity: 0.5;
+    }
+
+    .state-indicator.active {
+      box-shadow: 0 3px 12px rgba(0, 0, 0, 0.15);
+      transform: scale(1.05);
+      opacity: 1;
+      font-weight: 600;
+    }
+
+    .state-indicator.pending {
+      border-left-color: #6c757d;
+    }
+
+    .state-indicator.pending.active {
+      background: #f8f9fa;
+    }
+
+    .state-indicator.savedSettings {
+      border-left-color: #17a2b8;
+    }
+
+    .state-indicator.savedSettings.active {
+      background: #d1ecf1;
+    }
+
+    .state-indicator.init {
+      border-left-color: #ffc107;
+    }
+
+    .state-indicator.init.active {
+      background: #fff3cd;
+    }
+
+    .state-indicator.prepare {
+      border-left-color: #fd7e14;
+    }
+
+    .state-indicator.prepare.active {
+      background: #ffe5d0;
+    }
+
+    .state-indicator.playing {
+      border-left-color: #28a745;
+    }
+
+    .state-indicator.playing.active {
+      background: #d4edda;
+    }
+
+    .state-indicator.completing {
+      border-left-color: #007bff;
+    }
+
+    .state-indicator.completing.active {
+      background: #cce5ff;
+    }
+
+    .state-indicator.completed {
+      border-left-color: #6f42c1;
+    }
+
+    .state-indicator.completed.active {
+      background: #e2d9f3;
+    }
+
+    .state-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: #ccc;
+      transition: all 0.3s;
+      flex-shrink: 0;
+    }
+
+    .state-indicator.active .state-dot {
+      background: currentColor;
+      animation: pulse 2s ease-in-out infinite;
+    }
+
+    @keyframes pulse {
+
+      0%,
+      100% {
+        opacity: 1;
+        transform: scale(1);
+      }
+
+      50% {
+        opacity: 0.6;
+        transform: scale(1.2);
+      }
+    }
+
+    .state-label {
+      flex: 1;
+      font-size: 12px;
+      color: #333;
+    }
+
+    .state-description {
+      font-size: 10px;
+      color: #666;
+      font-weight: normal;
+      margin-top: 2px;
+    }
+
+    .players-added-section {
+      background: linear-gradient(135deg, #e8f5e9 0%, #c8e6c9 100%);
+      padding: 10px;
+      border-radius: 6px;
+      margin-top: 10px;
+      border: 1px solid #4caf50;
+    }
+
+    .players-added-section h4 {
+      margin: 0 0 6px 0;
+      color: #2e7d32;
+      font-size: 13px;
+    }
+
+    .players-added-section div {
+      font-size: 10px;
+    }
   </style>
 </head>
+
 <body>
+  <!-- Floating Game State Panel -->
+  <div class="game-state-panel">
+    <h2>🎮 Trạng Thái</h2>
+
+    <div class="state-indicator pending" data-state="pending">
+      <div class="state-dot" style="color: #6c757d;"></div>
+      <div class="state-label">
+        PENDING
+        <div class="state-description">Chờ cấu hình</div>
+      </div>
+    </div>
+
+    <div class="state-indicator savedSettings" data-state="savedSettings">
+      <div class="state-dot" style="color: #17a2b8;"></div>
+      <div class="state-label">
+        SAVED
+        <div class="state-description">Đã lưu</div>
+      </div>
+    </div>
+
+    <div class="state-indicator init" data-state="init">
+      <div class="state-dot" style="color: #ffc107;"></div>
+      <div class="state-label">
+        INIT
+        <div class="state-description">Nhận comment</div>
+      </div>
+    </div>
+
+    <div class="state-indicator prepare" data-state="prepare">
+      <div class="state-dot" style="color: #fd7e14;"></div>
+      <div class="state-label">
+        PREPARE
+        <div class="state-description">Chuẩn bị</div>
+      </div>
+    </div>
+
+    <div class="state-indicator playing" data-state="playing">
+      <div class="state-dot" style="color: #28a745;"></div>
+      <div class="state-label">
+        PLAYING
+        <div class="state-description">Đang chơi</div>
+      </div>
+    </div>
+
+    <div class="state-indicator completing" data-state="completing">
+      <div class="state-dot" style="color: #007bff;"></div>
+      <div class="state-label">
+        COMPLETING
+        <div class="state-description">Hoàn thành</div>
+      </div>
+    </div>
+
+    <div class="state-indicator completed" data-state="completed">
+      <div class="state-dot" style="color: #6f42c1;"></div>
+      <div class="state-label">
+        COMPLETED
+        <div class="state-description">Kết thúc</div>
+      </div>
+    </div>
+
+    <div class="players-added-section">
+      <h4>👥 Người chơi: <span id="playersAddedCount">0</span></h4>
+      <div style="font-size: 10px; color: #666;">
+        <strong>Phòng:</strong> <span id="roomIdDisplay">-</span><br>
+        <strong>Từ khóa:</strong> <span id="keywordDisplay">-</span>
+      </div>
+    </div>
+  </div>
+
   <div class="container">
     <h1>🎮 Bảng Điều Khiển Game</h1>
 
+
+
     <div class="section">
-      <h2>📡 Trạng Thái Kết Nối</h2>
+      <h2>📡 Kết Nối</h2>
       <div id="status" class="status disconnected">Chưa kết nối</div>
-      <div style="margin-top: 10px;">
-        <strong>ID Phòng:</strong> <span id="roomId">-</span>
-      </div>
-      <div style="margin-top: 5px;">
-        <strong>Trạng thái Game:</strong> <span id="gameState">-</span>
-      </div>
-      <div style="margin-top: 5px;">
-        <strong>Số người chơi:</strong> <span id="playersCount">0</span>
-      </div>
     </div>
 
     <div class="section">
       <h2>⚙️ Cấu Hình Game</h2>
-      
+
       <div class="form-group">
         <label>ID Phòng:</label>
         <input type="text" id="inputRoomId" value="test-room-123" />
@@ -322,34 +715,84 @@
       </div>
     </div>
 
+    <div class="section" style="background: #e8f5e9;">
+      <h2>💬 Cấu Hình Facebook Comments</h2>
 
-    <div class="section auto-section">
-      <h2>🤖 Tự Động Thêm Người Chơi</h2>
-      
+      <div class="form-group">
+        <label>Video ID:</label>
+        <input type="text" id="commentVideoId" placeholder="Nhập Facebook Live Video ID" />
+        <small style="color: #666; display: block; margin-top: 5px;">
+          Ví dụ: 1160226539653463
+        </small>
+      </div>
+
+      <div class="form-group">
+        <label>Access Token:</label>
+        <input type="text" id="commentAccessToken" placeholder="Nhập Facebook Access Token" />
+        <small style="color: #666; display: block; margin-top: 5px;">
+          Token cần quyền truy cập comments của video
+        </small>
+      </div>
+
+      <div class="form-group">
+        <label>Cookie:</label>
+        <textarea id="commentCookie" placeholder="Nhập Facebook Cookie" rows="3" style="resize: vertical;"></textarea>
+        <small style="color: #666; display: block; margin-top: 5px;">
+          Cookie từ trình duyệt khi đã đăng nhập Facebook
+        </small>
+      </div>
+
       <div class="inline-group">
         <div class="form-group">
-          <label>Số lượng người:</label>
-          <input type="number" id="autoPlayerCount" value="10" min="1" max="50" />
+          <label>Polling Interval (ms):</label>
+          <input type="number" id="commentPollingInterval" value="1000" min="500" max="10000" step="100" />
         </div>
 
-        <div class="form-group">
-          <label>Khoảng thời gian (ms):</label>
-          <input type="number" id="autoInterval" value="1000" min="100" max="5000" step="100" />
+        <div class="form-group checkbox-group" style="align-items: flex-end;">
+          <input type="checkbox" id="commentEnabled" />
+          <label for="commentEnabled" style="margin-bottom: 0;">Bật thu thập comments</label>
         </div>
       </div>
 
       <div class="button-group">
-        <button class="btn-warning" onclick="addRandomPlayers()">🎲 Thêm Ngẫu Nhiên</button>
-        <!-- <button class="btn-warning" onclick="startAutoAddPlayers()">▶️ Bắt Đầu Tự Động</button>
-        <button class="btn-danger" onclick="stopAutoAddPlayers()">⏹️ Dừng Tự Động</button> -->
-        <button class="btn-info" onclick="clearAllPlayers()">🗑️ Xóa Tất Cả</button>
+        <button class="btn-success" onclick="saveCommentConfig()">💾 Lưu Cấu Hình</button>
+        <button class="btn-info" onclick="testCommentConnection()">🔍 Test Kết Nối</button>
+        <button class="btn-primary" onclick="openShowCmt()">📺 Mở /showcmt</button>
       </div>
 
-      <div style="margin-top: 15px;">
-        <strong>Danh sách người chơi đã thêm:</strong>
-        <div id="playerList" class="player-list"></div>
+      <div class="button-group" style="margin-top: 10px;">
+        <button class="btn-success" onclick="startCommentPolling()">▶️ Bắt Đầu Polling</button>
+        <button class="btn-danger" onclick="stopCommentPolling()">⏹️ Dừng Polling</button>
+      </div>
+
+      <div id="commentStatus" style="margin-top: 10px; padding: 10px; border-radius: 5px; display: none;"></div>
+
+      <!-- Comment List Section -->
+      <div style="margin-top: 20px;">
+        <h3 style="margin-bottom: 10px;">📝 Danh Sách Comments</h3>
+
+        <div class="form-group">
+          <input type="text" id="commentSearch" placeholder="🔍 Tìm kiếm comments..." oninput="filterComments()"
+            style="margin-bottom: 10px;" />
+        </div>
+
+        <div id="commentListContainer"
+          style="max-height: 400px; overflow-y: auto; background: white; border-radius: 5px; padding: 10px;">
+          <div id="commentList" style="display: flex; flex-direction: column; gap: 10px;">
+            <div style="text-align: center; color: #999; padding: 20px;">
+              Chưa có comments. Bật thu thập để xem comments.
+            </div>
+          </div>
+        </div>
+
+        <div style="margin-top: 10px; font-size: 12px; color: #666;">
+          Tổng: <span id="totalComments">0</span> comments |
+          Hiển thị: <span id="displayedComments">0</span> comments
+        </div>
       </div>
     </div>
+
+
 
     <div class="section">
       <h2>📊 Nhật Ký Hoạt Động</h2>
@@ -362,34 +805,14 @@
 
   <script src="/socket.io/socket.io.js"></script>
   <script>
-    const API_BASE_URL = 'https://server-game-zk1e.onrender.com';
+    const API_BASE_URL = 'http://localhost:8182';
     const socket = io(API_BASE_URL);
     let currentRoomId = document.getElementById('inputRoomId').value;
     let gameState = {
       state: 'pending',
       count: 0
     };
-    let autoAddInterval = null;
-    let addedPlayers = [];
-
-    // Danh sách tên tiếng Việt
-    const vietnameseNames = [
-      'Nguyễn Văn An', 'Trần Thị Bình', 'Lê Hoàng Cường', 'Phạm Thị Dung',
-      'Hoàng Văn Em', 'Đặng Thị Phương', 'Vũ Minh Giang', 'Bùi Thị Hà',
-      'Đỗ Văn Hùng', 'Ngô Thị Lan', 'Dương Văn Khoa', 'Phan Thị Linh',
-      'Mai Văn Minh', 'Trương Thị Nga', 'Lý Văn Nhân', 'Võ Thị Oanh',
-      'Tạ Văn Phúc', 'Đinh Thị Quỳnh', 'Chu Văn Sang', 'Đoàn Thị Thảo',
-      'Hồ Văn Thắng', 'Lưu Thị Uyên', 'Cao Văn Vinh', 'Thái Thị Xuân',
-      'Tô Văn Yên', 'Kiều Thị Hương', 'La Văn Tuấn', 'Ma Thị Mai',
-      'Nghiêm Văn Nam', 'Ông Thị Phượng', 'Quan Văn Quang', 'Tống Thị Rạng',
-      'Ung Văn Sơn', 'Văn Thị Tâm', 'Xa Văn Trung', 'Yên Thị Ngọc',
-      'Điền Văn Đức', 'Âu Thị Hằng', 'Bạch Văn Hải', 'Cam Thị Kim',
-      'Đan Văn Long', 'Gia Thị Mỹ', 'Hà Văn Phong', 'Hoa Thị Thanh',
-      'La Văn Bình', 'Mai Thị Chi', 'Nhữ Văn Đạt', 'Phùng Thị Hiền',
-      'Quách Văn Hưng', 'Sử Thị Khánh', 'Tân Văn Lâm', 'Ứng Thị Minh'
-    ];
-
-    const platforms = ['facebook', 'youtube', 'tiktok'];
+    let playersAddedCount = 0;
 
     // Socket connection
     socket.on('connect', () => {
@@ -406,28 +829,195 @@
     // Lắng nghe trạng thái game từ Game View
     socket.on('onDucky', (data) => {
       console.log('Received action from Game View/Server:', data);
-      
+
       if (data.action === 'pingController') {
         gameState = data.data;
         updateGameInfo();
+        updateGameStateVisualization(gameState.state);
       }
-      
+
       if (data.action === 'changeGameStage') {
         gameState.state = data.data;
         updateGameInfo();
+        updateGameStateVisualization(data.data);
       }
-      
+
       if (data.action === 'addedCharacter') {
         gameState.count = data.data;
+        playersAddedCount = data.data;
         updateGameInfo();
       }
-      
+
       // Hiển thị log cho các lệnh điều khiển được gửi đi
       if (['initGame', 'runGame', 'resetGame', 'showTopWinners', 'showResultList'].includes(data.action)) {
-          addLog(`Server đã phản hồi lệnh điều khiển: ${data.action}`, 'success');
+        addLog(`Server đã phản hồi lệnh điều khiển: ${data.action}`, 'success');
       }
-      
+
     });
+
+    // Listen for game state changes from server
+    socket.on('game_state_changed', (data) => {
+      console.log('Game state changed:', data);
+      if (data.state) {
+        gameState.state = data.state;
+        updateGameStateVisualization(data.state);
+        addLog(`Trạng thái game: ${data.state}`, 'info');
+      }
+    });
+
+    // Listen for Facebook comments
+    let allComments = [];
+    let pinnedComments = new Set();
+
+    socket.on('facebook_comment', (comments) => {
+      console.log('Received Facebook comments:', comments);
+
+      // Add new comments to the list
+      comments.forEach(comment => {
+        // Check if comment already exists
+        const exists = allComments.some(c => c.id === comment.id);
+        if (!exists) {
+          allComments.unshift(comment); // Add to beginning
+
+          // If game is in INIT state and comment is not an error, increment player count
+          if (gameState.state === 'init' && !comment.metadata?.isError) {
+            playersAddedCount++;
+            updateGameInfo();
+            addLog(`✅ Đã thêm người chơi: ${comment.author.name}`, 'success');
+          } else {
+            addLog(`💬 Comment mới từ ${comment.author.name}`, 'success');
+          }
+        }
+      });
+
+      // Limit to 250 comments (including errors)
+      if (allComments.length > 250) {
+        allComments = allComments.slice(0, 250);
+      }
+
+      // Update display
+      displayComments();
+    });
+
+    function displayComments() {
+      const commentList = document.getElementById('commentList');
+      const searchTerm = document.getElementById('commentSearch').value.toLowerCase();
+
+      // Filter comments based on search
+      let filteredComments = allComments;
+      if (searchTerm) {
+        filteredComments = allComments.filter(comment =>
+          comment.author.name.toLowerCase().includes(searchTerm) ||
+          comment.text.toLowerCase().includes(searchTerm) ||
+          comment.id.toLowerCase().includes(searchTerm)
+        );
+      }
+
+      // Sort: pinned first, then by timestamp (errors flow normally)
+      filteredComments.sort((a, b) => {
+        const aPinned = pinnedComments.has(a.id);
+        const bPinned = pinnedComments.has(b.id);
+
+        // Pinned first
+        if (aPinned && !bPinned) return -1;
+        if (!aPinned && bPinned) return 1;
+
+        // Then by timestamp (newest first)
+        return b.timestamp - a.timestamp;
+      });
+
+      // Update counts
+      document.getElementById('totalComments').textContent = allComments.length;
+      document.getElementById('displayedComments').textContent = filteredComments.length;
+
+      // Render comments
+      if (filteredComments.length === 0) {
+        commentList.innerHTML = `
+          <div style="text-align: center; color: #999; padding: 20px;">
+            ${searchTerm ? 'Không tìm thấy comments phù hợp' : 'Chưa có comments. Bật thu thập để xem comments.'}
+          </div>
+        `;
+        return;
+      }
+
+      commentList.innerHTML = filteredComments.map(comment => {
+        const isError = comment.metadata?.isError || comment.platform?.name === 'system';
+        const isPinned = pinnedComments.has(comment.id);
+        const timeAgo = formatTimeAgo(comment.timestamp);
+
+        return `
+          <div class="comment-item ${isError ? 'error' : ''} ${isPinned ? 'pinned' : ''}" data-comment-id="${comment.id}">
+            <img src="${comment.author.avatar || 'https://ui-avatars.com/api/?name=' + encodeURIComponent(comment.author.name)}" 
+                 class="comment-avatar" 
+                 alt="${escapeHtml(comment.author.name)}"
+                 onerror="this.src='https://ui-avatars.com/api/?name=${encodeURIComponent(comment.author.name)}'">
+            <div class="comment-content">
+              <div class="comment-header">
+                <span class="comment-author">${escapeHtml(comment.author.name)}</span>
+                <span class="comment-time">${timeAgo}</span>
+              </div>
+              <div class="comment-text">${escapeHtml(comment.text)}</div>
+              <div class="comment-id">ID: ${comment.id}</div>
+            </div>
+            ${!isError ? `
+            <button class="pin-button ${isPinned ? 'pinned' : ''}" 
+                    onclick="togglePin('${comment.id}')" 
+                    title="${isPinned ? 'Bỏ ghim' : 'Ghim comment'}">
+              ${isPinned ? '📌' : '📍'}
+            </button>
+            ` : ''}
+          </div>
+        `;
+      }).join('');
+    }
+
+    function filterComments() {
+      displayComments();
+    }
+
+    function togglePin(commentId) {
+      const isPinned = pinnedComments.has(commentId);
+
+      if (isPinned) {
+        pinnedComments.delete(commentId);
+        addLog(`Đã bỏ ghim comment ${commentId}`, 'info');
+      } else {
+        pinnedComments.add(commentId);
+        addLog(`Đã ghim comment ${commentId}`, 'info');
+      }
+
+      // Broadcast pin event to all clients (including showcmt)
+      socket.emit('call', 'pin.comment', {
+        room: currentRoomId,
+        commentId: commentId,
+        pinned: !isPinned
+      }, (error) => {
+        if (error) {
+          console.error('Error broadcasting pin event:', error);
+        } else {
+          console.log('Pin event broadcasted:', commentId, !isPinned);
+        }
+      });
+
+      displayComments();
+    }
+
+    function formatTimeAgo(timestamp) {
+      const now = Date.now();
+      const diff = Math.floor((now - timestamp) / 1000); // seconds
+
+      if (diff < 60) return 'Vừa xong';
+      if (diff < 3600) return `${Math.floor(diff / 60)} phút trước`;
+      if (diff < 86400) return `${Math.floor(diff / 3600)} giờ trước`;
+      return new Date(timestamp).toLocaleDateString('vi-VN');
+    }
+
+    function escapeHtml(text) {
+      const div = document.createElement('div');
+      div.textContent = text;
+      return div.innerHTML;
+    }
+
 
     function updateStatus(connected) {
       const statusEl = document.getElementById('status');
@@ -441,8 +1031,24 @@
     }
 
     function updateGameInfo() {
-      document.getElementById('gameState').textContent = gameState.state || '-';
-      document.getElementById('playersCount').textContent = gameState.count || 0;
+      document.getElementById('playersAddedCount').textContent = playersAddedCount;
+      document.getElementById('roomIdDisplay').textContent = currentRoomId;
+      document.getElementById('keywordDisplay').textContent = document.getElementById('keyword').value || '-';
+    }
+
+    function updateGameStateVisualization(state) {
+      // Remove active class from all indicators
+      document.querySelectorAll('.state-indicator').forEach(indicator => {
+        indicator.classList.remove('active');
+      });
+
+      // Add active class to current state
+      const currentIndicator = document.querySelector(`.state-indicator[data-state="${state}"]`);
+      if (currentIndicator) {
+        currentIndicator.classList.add('active');
+      }
+
+      addLog(`🎮 Trạng thái: ${state.toUpperCase()}`, 'info');
     }
 
     function addLog(message, type = '') {
@@ -461,7 +1067,7 @@
 
     function subscribeToRoom() {
       currentRoomId = document.getElementById('inputRoomId').value;
-      
+
       // Control Panel Subscribe để nhận các thông báo chung của phòng (room.config)
       socket.emit('call', 'live.subscribe', { id: currentRoomId }, (error) => {
         if (error) {
@@ -469,7 +1075,7 @@
           addLog('Lỗi khi subscribe phòng', 'error');
         } else {
           console.log('Subscribed to room:', currentRoomId);
-          document.getElementById('roomId').textContent = currentRoomId;
+          updateGameInfo();
           addLog(`Đã subscribe vào phòng: ${currentRoomId}`, 'success');
           // Sau khi subscribe, gửi ping để Game View gửi trạng thái ngược lại
           sendAction('pingGameView');
@@ -541,9 +1147,9 @@
       if (confirm('Bạn có chắc muốn làm mới game không?')) {
         sendAction('resetGame');
         addLog('Gửi lệnh reset game', 'info');
-        addedPlayers = [];
-        updatePlayerList();
-        
+        playersAddedCount = 0;
+        updateGameInfo();
+
         // Gọi API để xóa dữ liệu trên Server (tùy chọn)
         fetch(`${API_BASE_URL}/api/room/${currentRoomId}/reset`, { method: 'POST' });
       }
@@ -557,252 +1163,222 @@
       sendAction('showResultList', true);
     }
 
-    function getRandomName() {
-      return vietnameseNames[Math.floor(Math.random() * vietnameseNames.length)];
-    }
-
-    function getRandomPlatform() {
-      return platforms[Math.floor(Math.random() * platforms.length)];
-    }
-
-    async function addTestComment() {
-      const playerName = document.getElementById('testPlayerName').value;
-      const commentText = document.getElementById('testComment').value;
-      
-      const comment = {
-        author: {
-          id: 'test-user-' + Date.now(),
-          name: playerName,
-          avatar: `https://ui-avatars.com/api/?name=${encodeURIComponent(playerName)}&background=random`
-        },
-        platform: {
-          name: 'facebook'
-        },
-        text: commentText,
-      };
-
-      try {
-        await fetch(`${API_BASE_URL}/api/test/add-comment`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            room: currentRoomId,
-            comment: comment
-          })
-        });
-        addLog(`Đã thêm comment từ ${playerName}`, 'success');
-        addedPlayers.push(comment);
-        updatePlayerList();
-      } catch (error) {
-        console.error('Error adding test comment:', error);
-        addLog('Lỗi khi thêm comment', 'error');
-      }
-    }
-
-    async function addRandomComment() {
-      const playerName = getRandomName();
-      const platform = getRandomPlatform();
-      const commentText = document.getElementById('keyword').value || 'streammix';
-      
-      const comment = {
-        author: {
-          id: 'player-' + Date.now() + '-' + Math.random(),
-          name: playerName,
-          avatar: `https://ui-avatars.com/api/?name=${encodeURIComponent(playerName)}&background=random`
-        },
-        platform: {
-          name: platform
-        },
-        text: commentText,
-      };
-
-      try {
-        await fetch(`${API_BASE_URL}/api/test/add-comment`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            room: currentRoomId,
-            comment: comment
-          })
-        });
-        addLog(`✅ Đã thêm ${playerName} (${platform})`, 'success');
-        addedPlayers.push(comment);
-        updatePlayerList();
-        return true;
-      } catch (error) {
-        console.error('Error adding random comment:', error);
-        addLog('❌ Lỗi khi thêm người chơi', 'error');
-        return false;
-      }
-    }
-
-    async function addRandomPlayers() {
-      const count = parseInt(document.getElementById('autoPlayerCount').value);
-      const interval = parseInt(document.getElementById('autoInterval').value);
-      
-      addLog(`Bắt đầu thêm ${count} người chơi ngẫu nhiên...`);
-      
-      for (let i = 0; i < count; i++) {
-        if (gameState.count >= parseInt(document.getElementById('maxCharacters').value)) {
-            addLog('Đã đạt số lượng người chơi tối đa!', 'warning');
-            break;
-        }
-        await addRandomComment();
-        await new Promise(resolve => setTimeout(resolve, interval));
-      }
-      
-      addLog(`Đã hoàn thành thêm người chơi`, 'success');
-    }
-
-    function startAutoAddPlayers() {
-      if (autoAddInterval) {
-        addLog('Chế độ tự động đã đang chạy', 'error');
-        return;
-      }
-      
-      const interval = parseInt(document.getElementById('autoInterval').value);
-      
-      addLog('Bắt đầu chế độ tự động thêm người chơi', 'success');
-      
-      autoAddInterval = setInterval(() => {
-        if (gameState.count >= parseInt(document.getElementById('maxCharacters').value)) {
-             addLog('Đã đạt số lượng người chơi tối đa, dừng tự động.', 'warning');
-             stopAutoAddPlayers();
-             return;
-        }
-        addRandomComment();
-      }, interval);
-    }
-
-    function stopAutoAddPlayers() {
-      if (autoAddInterval) {
-        clearInterval(autoAddInterval);
-        autoAddInterval = null;
-        addLog('Đã dừng chế độ tự động', 'success');
-      } else {
-        addLog('Chế độ tự động chưa chạy', 'error');
-      }
-    }
-
-    function clearAllPlayers() {
-      if (confirm('Bạn có chắc muốn xóa danh sách người chơi (chỉ trên Control Panel) và reset game không?')) {
-        addedPlayers = [];
-        updatePlayerList();
-        addLog('Đã xóa danh sách người chơi (Control Panel)', 'success');
-        resetGame(); // Gửi lệnh reset game
-      }
-    }
-
-    function updatePlayerList() {
-      const playerList = document.getElementById('playerList');
-      
-      if (addedPlayers.length === 0) {
-        playerList.innerHTML = '<div style="text-align: center; color: #999; padding: 20px;">Chưa có người chơi nào</div>';
-        return;
-      }
-      
-      playerList.innerHTML = addedPlayers.slice().reverse().slice(0, 50).map((player) => {
-          const author = player.author || addedPlayers.author;
-          const platformName = player.platform?.name || 'Unknown';
-          const text = player.text || 'N/A';
-          return `
-            <div class="player-item">
-              <img src="${author.avatar}" class="player-avatar" alt="${author.name}">
-              <div style="flex: 1;">
-                <strong>${author.name}</strong>
-                <div style="font-size: 11px; color: #999;">${platformName} • ${text}</div>
-              </div>
-            </div>
-          `;
-      }).join('');
-    }
-
-    async function addTestLike() {
-      // Logic tìm player đã thêm để gửi reaction (dùng addedPlayers cho tiện test)
-      if (addedPlayers.length === 0) {
-        addLog('Chưa có người chơi nào để thêm like', 'error');
-        return;
-      }
-
-      const randomPlayer = addedPlayers[Math.floor(Math.random() * addedPlayers.length)];
-      
-      const reaction = {
-        author: {
-          id: randomPlayer.author.id
-        },
-        reaction: 'LIKE',
-        metadata: {
-          likeCount: 1
-        },
-      };
-
-      try {
-        await fetch(`${API_BASE_URL}/api/reactions/add`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            room: currentRoomId,
-            author: reaction.author,
-            reaction: reaction.reaction,
-            metadata: reaction.metadata
-          })
-        });
-        addLog(`👍 Đã thêm like cho ${randomPlayer.author.name}`, 'success');
-      } catch (error) {
-        console.error('Error adding test like:', error);
-        addLog('Lỗi khi thêm like', 'error');
-      }
-    }
-
-    async function addTestDonation() {
-      if (addedPlayers.length === 0) {
-        addLog('Chưa có người chơi nào để thêm donation', 'error');
-        return;
-      }
-
-      const randomPlayer = addedPlayers[Math.floor(Math.random() * addedPlayers.length)];
-      const amount = Math.floor(Math.random() * 10) + 1;
-      
-      const reaction = {
-        author: {
-          id: randomPlayer.author.id
-        },
-        reaction: 'tiktok-donation',
-        metadata: {
-          giftInfo: {
-            cost: amount
-          }
-        },
-      };
-
-      try {
-        await fetch(`${API_BASE_URL}/api/reactions/add`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            room: currentRoomId,
-            author: reaction.author,
-            reaction: reaction.reaction,
-            metadata: reaction.metadata
-          })
-        });
-        addLog(`💰 Đã thêm ${amount} coin cho ${randomPlayer.author.name}`, 'success');
-      } catch (error) {
-        console.error('Error adding test donation:', error);
-        addLog('Lỗi khi thêm donation', 'error');
-      }
-    }
 
     // Initialize
     document.getElementById('inputRoomId').addEventListener('change', subscribeToRoom);
-    
-    // Auto update player list
-    updatePlayerList();
 
-    // Cleanup on page unload
-    window.addEventListener('beforeunload', () => {
-      stopAutoAddPlayers();
-    });
+    // ============== COMMENT CONFIG FUNCTIONS ==============
+
+    async function saveCommentConfig() {
+      const config = {
+        enabled: false, // Don't auto-start, user will click "Bắt Đầu" button
+        liveVideoId: document.getElementById('commentVideoId').value.trim(),
+        accessToken: document.getElementById('commentAccessToken').value.trim(),
+        cookie: document.getElementById('commentCookie').value.trim(),
+        pollingInterval: parseInt(document.getElementById('commentPollingInterval').value),
+      };
+
+      if (!config.liveVideoId || !config.accessToken) {
+        alert('Vui lòng nhập Video ID và Access Token!');
+        return;
+      }
+
+      // Save to localStorage
+      try {
+        localStorage.setItem('fb_comment_config', JSON.stringify(config));
+        addLog('Đã lưu cấu hình vào localStorage', 'success');
+      } catch (e) {
+        console.error('Error saving to localStorage:', e);
+      }
+
+      try {
+        const response = await fetch(`${API_BASE_URL}/api/room/update-comment-config`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            room: currentRoomId,
+            config: config
+          })
+        });
+
+        const result = await response.json();
+        console.log('Comment config saved:', result);
+
+        if (result.status === 'SUCCESS') {
+          showCommentStatus('Đã lưu cấu hình comments thành công! Bấm "Bắt Đầu Polling" để bắt đầu.', 'success');
+          addLog('Đã lưu cấu hình comments lên server', 'success');
+        } else {
+          showCommentStatus('Lỗi khi lưu cấu hình: ' + (result.message || 'Unknown error'), 'error');
+          addLog('Lỗi khi lưu cấu hình comments', 'error');
+        }
+      } catch (error) {
+        console.error('Error saving comment config:', error);
+        showCommentStatus('Lỗi kết nối: ' + error.message, 'error');
+        addLog('Lỗi khi lưu cấu hình comments', 'error');
+      }
+    }
+
+    async function startCommentPolling() {
+      const videoId = document.getElementById('commentVideoId').value.trim();
+      const accessToken = document.getElementById('commentAccessToken').value.trim();
+
+      if (!videoId || !accessToken) {
+        alert('Vui lòng lưu cấu hình trước khi bắt đầu polling!');
+        return;
+      }
+
+      try {
+        const response = await fetch(`${API_BASE_URL}/api/room/start-comment-polling`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            room: currentRoomId
+          })
+        });
+
+        const result = await response.json();
+
+        if (result.status === 'SUCCESS') {
+          showCommentStatus('Đã bắt đầu polling comments!', 'success');
+          addLog('✅ Đã bắt đầu polling comments từ Facebook', 'success');
+        } else {
+          showCommentStatus('Lỗi: ' + (result.message || 'Unknown error'), 'error');
+          addLog('❌ Lỗi khi bắt đầu polling', 'error');
+        }
+      } catch (error) {
+        console.error('Error starting polling:', error);
+        showCommentStatus('Lỗi kết nối: ' + error.message, 'error');
+        addLog('❌ Lỗi khi bắt đầu polling', 'error');
+      }
+    }
+
+    async function stopCommentPolling() {
+      try {
+        const response = await fetch(`${API_BASE_URL}/api/room/stop-comment-polling`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            room: currentRoomId
+          })
+        });
+
+        const result = await response.json();
+
+        if (result.status === 'SUCCESS') {
+          showCommentStatus('Đã dừng polling comments!', 'success');
+          addLog('⏹️ Đã dừng polling comments', 'success');
+        } else {
+          showCommentStatus('Lỗi: ' + (result.message || 'Unknown error'), 'error');
+          addLog('❌ Lỗi khi dừng polling', 'error');
+        }
+      } catch (error) {
+        console.error('Error stopping polling:', error);
+        showCommentStatus('Lỗi kết nối: ' + error.message, 'error');
+        addLog('❌ Lỗi khi dừng polling', 'error');
+      }
+    }
+
+    async function testCommentConnection() {
+      const videoId = document.getElementById('commentVideoId').value.trim();
+      const accessToken = document.getElementById('commentAccessToken').value.trim();
+
+      if (!videoId || !accessToken) {
+        alert('Vui lòng nhập Video ID và Access Token!');
+        return;
+      }
+
+      showCommentStatus('Đang kiểm tra kết nối...', 'info');
+      addLog('Đang test kết nối Facebook API...', 'info');
+
+      try {
+        // Test by making a direct API call
+        const testUrl = `https://graph.facebook.com/v19.0/${videoId}/comments?access_token=${accessToken}&limit=1`;
+        const response = await fetch(testUrl);
+        const data = await response.json();
+
+        if (data.error) {
+          showCommentStatus('Lỗi: ' + data.error.message, 'error');
+          addLog('Test thất bại: ' + data.error.message, 'error');
+        } else {
+          showCommentStatus('Kết nối thành công! Tìm thấy ' + (data.data?.length || 0) + ' comments.', 'success');
+          addLog('Test thành công! API hoạt động bình thường.', 'success');
+        }
+      } catch (error) {
+        console.error('Test error:', error);
+        showCommentStatus('Lỗi kết nối: ' + error.message, 'error');
+        addLog('Test thất bại: ' + error.message, 'error');
+      }
+    }
+
+    function showCommentStatus(message, type) {
+      const statusEl = document.getElementById('commentStatus');
+      statusEl.style.display = 'block';
+      statusEl.textContent = message;
+
+      // Set colors based on type
+      if (type === 'success') {
+        statusEl.style.background = '#d4edda';
+        statusEl.style.color = '#155724';
+      } else if (type === 'error') {
+        statusEl.style.background = '#f8d7da';
+        statusEl.style.color = '#721c24';
+      } else if (type === 'info') {
+        statusEl.style.background = '#d1ecf1';
+        statusEl.style.color = '#0c5460';
+      }
+
+      // Auto hide after 5 seconds
+      setTimeout(() => {
+        statusEl.style.display = 'none';
+      }, 5000);
+    }
+
+    function openShowCmt() {
+      const url = `${API_BASE_URL}/showcmt?room=${currentRoomId}`;
+      window.open(url, '_blank', 'width=800,height=600');
+      addLog('Đã mở trang hiển thị comments', 'info');
+    }
+
+    // Load comment config on page load
+    async function loadCommentConfig() {
+      // First, try to load from localStorage
+      try {
+        const savedConfig = localStorage.getItem('fb_comment_config');
+        if (savedConfig) {
+          const config = JSON.parse(savedConfig);
+          document.getElementById('commentVideoId').value = config.liveVideoId || '';
+          document.getElementById('commentAccessToken').value = config.accessToken || '';
+          document.getElementById('commentCookie').value = config.cookie || '';
+          document.getElementById('commentPollingInterval').value = config.pollingInterval || 1000;
+          document.getElementById('commentEnabled').checked = config.enabled || false;
+          addLog('Đã tải cấu hình từ localStorage', 'success');
+        }
+      } catch (e) {
+        console.error('Error loading from localStorage:', e);
+      }
+
+      // Then, try to load from server (will override localStorage if exists)
+      try {
+        const response = await fetch(`${API_BASE_URL}/api/room/${currentRoomId}/comment-config`);
+        const result = await response.json();
+
+        if (result.status === 'SUCCESS' && result.config) {
+          document.getElementById('commentVideoId').value = result.config.liveVideoId || '';
+          document.getElementById('commentAccessToken').value = result.config.accessToken || '';
+          document.getElementById('commentCookie').value = result.config.cookie || '';
+          document.getElementById('commentPollingInterval').value = result.config.pollingInterval || 1000;
+          document.getElementById('commentEnabled').checked = result.config.enabled || false;
+
+          addLog('Đã tải cấu hình từ server', 'success');
+        }
+      } catch (error) {
+        console.error('Error loading comment config from server:', error);
+      }
+    }
+
+    // Load config after subscribing to room
+    setTimeout(loadCommentConfig, 1000);
   </script>
 </body>
+
 </html>

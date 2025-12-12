@@ -1,0 +1,385 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+    background: transparent;
+    overflow: hidden;
+    height: 100vh;
+}
+
+#comments-container {
+    height: calc(100vh - 50px);
+    overflow-y: auto;
+    padding: 20px;
+    scroll-behavior: smooth;
+}
+
+/* Custom scrollbar */
+#comments-container::-webkit-scrollbar {
+    width: 8px;
+}
+
+#comments-container::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 10px;
+}
+
+#comments-container::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 10px;
+}
+
+#comments-container::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.3);
+}
+
+/* Comment styling */
+.comment {
+    display: flex;
+    gap: 10px;
+    padding: 10px;
+    margin-bottom: 8px;
+    opacity: 0;
+    transform: translateY(-20px);
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    border-radius: 14px;
+}
+
+.comment.show {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+.comment:hover {
+    background: rgba(255, 255, 255, 0.08);
+    border-color: rgba(255, 255, 255, 0.2);
+    transform: translateX(5px);
+}
+
+/* Pinned comment - Clean modern design with snowflakes */
+.comment.pinned {
+    background: linear-gradient(135deg, #fff5f5 0%, #ffe5e5 50%, #fff0f0 100%);
+    box-shadow:
+        0 8px 32px rgba(187, 5, 31, 0.15),
+        0 2px 8px rgba(187, 5, 31, 0.1),
+        inset 0 1px 0 rgba(255, 255, 255, 0.8);
+    padding: 20px;
+    position: relative;
+    animation: festiveGlow 3s ease-in-out infinite;
+    border-radius: 16px;
+    margin-bottom: 20px;
+    backdrop-filter: blur(10px);
+}
+
+/* Stars and snowflakes for pinned comments */
+.comment.pinned::before {
+    content: '⭐ ❄️';
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    font-size: 22px;
+    animation: twinkle 2s ease-in-out infinite;
+}
+
+.comment.pinned::after {
+    content: '❄️ ⭐ ❄️';
+    position: absolute;
+    bottom: 8px;
+    left: 8px;
+    font-size: 18px;
+    opacity: 0.7;
+    animation: snowfall 4s ease-in-out infinite;
+}
+
+
+
+.comment.pinned .comment-avatar {
+    position: relative;
+}
+
+.comment.pinned .comment-avatar::before {
+    position: absolute;
+    bottom: -5px;
+    right: -5px;
+    font-size: 20px;
+    animation: sparkle 1.5s ease-in-out infinite;
+    z-index: 10;
+}
+
+.comment.pinned .comment-avatar::after {
+    content: '❄️';
+    position: absolute;
+    top: -8px;
+    left: -8px;
+    font-size: 18px;
+    animation: snowfall 3s ease-in-out infinite;
+    z-index: 10;
+}
+
+.comment.pinned .avt {
+    width: 60px;
+    height: 60px;
+    border: 3px solid #38bdf8;
+    box-shadow: 0 4px 12px rgba(56, 189, 248, 0.3);
+}
+
+.comment.pinned .noel_hat {
+    width: 65px;
+    top: -8px;
+}
+
+.comment.pinned .comment-content {
+    background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+    padding: 12px;
+    border-radius: 12px;
+}
+
+.comment.pinned .comment-name {
+    font-size: 15px;
+    font-weight: 900;
+    color: #0284c7;
+    text-shadow: 1px 1px 2px rgba(2, 132, 199, 0.1);
+}
+
+.comment.pinned .comment-message {
+    font-size: 14px;
+    font-weight: 700;
+    color: #0c4a6e;
+    line-height: 1.5;
+}
+
+@keyframes festiveGlow {
+
+    0%,
+    100% {
+        box-shadow: 0 4px 16px rgba(56, 189, 248, 0.2);
+    }
+
+    50% {
+        box-shadow: 0 6px 24px rgba(56, 189, 248, 0.4);
+    }
+}
+
+@keyframes twinkle {
+
+    0%,
+    100% {
+        opacity: 1;
+        transform: scale(1);
+    }
+
+    50% {
+        opacity: 0.6;
+        transform: scale(1.2);
+    }
+}
+
+@keyframes snowfall {
+
+    0%,
+    100% {
+        transform: translateY(0) rotate(0deg);
+    }
+
+    50% {
+        transform: translateY(-5px) rotate(10deg);
+    }
+}
+
+@keyframes sparkle {
+
+    0%,
+    100% {
+        opacity: 1;
+        transform: scale(1) rotate(0deg);
+    }
+
+    50% {
+        opacity: 0.5;
+        transform: scale(1.3) rotate(180deg);
+    }
+}
+
+.comment-avatar {
+    flex-shrink: 0;
+    position: relative;
+}
+
+.avt {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    border: 2px solid #bb051f;
+    object-fit: cover;
+}
+
+.comment-content {
+    flex: 1;
+    min-width: 0;
+    background-color: white;
+    padding: 8px 12px;
+    border-radius: 14px;
+}
+
+.comment-header {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: 4px;
+}
+
+.comment-name {
+    font-weight: 800;
+    font-size: 12px;
+    color: #bb051f;
+}
+
+.comment-platform {
+    color: #1877f2;
+    display: flex;
+    align-items: center;
+}
+
+.comment-message {
+    font-size: 13px;
+    line-height: 1.4;
+    color: #3f8f29;
+    word-wrap: break-word;
+    margin-bottom: 4px;
+    font-weight: 600
+}
+
+.comment-time {
+    font-size: 12px;
+    color: rgba(255, 255, 255, 0.5);
+}
+
+/* Status bar */
+#status-bar {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 50px;
+    background: rgba(0, 0, 0, 0.8);
+    backdrop-filter: blur(10px);
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    display: flex;
+    align-items: center;
+    padding: 0 20px;
+    gap: 12px;
+    font-size: 14px;
+}
+
+#status-indicator {
+    font-size: 20px;
+    animation: pulse 2s ease-in-out infinite;
+}
+
+#status-indicator.connected {
+    color: #4caf50;
+}
+
+#status-indicator.disconnected {
+    color: #f44336;
+    animation: none;
+}
+
+#status-indicator.error {
+    color: #ff9800;
+    animation: none;
+}
+
+#status-text {
+    flex: 1;
+    color: rgba(255, 255, 255, 0.7);
+}
+
+#comment-count {
+    color: #4fc3f7;
+    font-weight: 600;
+}
+
+@keyframes pulse {
+
+    0%,
+    100% {
+        opacity: 1;
+    }
+
+    50% {
+        opacity: 0.5;
+    }
+}
+
+.noel_hat {
+    width: 60px;
+    position: absolute;
+    top: -8px;
+    left: -20px
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    #comments-container {
+        padding: 12px;
+    }
+
+    .comment {
+        padding: 12px;
+        gap: 10px;
+    }
+
+    .comment-avatar img {
+        width: 60px;
+        height: 60px;
+    }
+
+    .comment-name {
+        font-size: 16px;
+    }
+
+    .comment-message {
+        font-size: 18px;
+    }
+
+    #status-bar {
+        padding: 0 12px;
+        font-size: 12px;
+    }
+}
+
+/* Animation for new comments */
+@keyframes slideInFromTop {
+    from {
+        opacity: 0;
+        transform: translateY(-30px) scale(0.95);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+.comment.show {
+    animation: slideInFromTop 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.comment.pinned::before {
+    content: '';
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    width: 80px;
+    height: 80px;
+    background-image: url('http://localhost:8182/assets/HANA_Logo.png');
+    background-size: contain;
+    background-repeat: no-repeat;
+    animation: snowfall 4s ease-in-out infinite;
+    z-index: 2;
+}

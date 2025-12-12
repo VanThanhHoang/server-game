@@ -5,6 +5,8 @@ const http = require("http");
 const socketIO = require("socket.io");
 const cors = require("cors");
 const path = require("path");
+const { commentsService } = require("./src/service.js");
+
 
 const app = express();
 const server = http.createServer(app);
@@ -19,10 +21,7 @@ const io = socketIO(server, {
 
 app.use(cors());
 app.use(express.json());
-
-// Giả định bạn có một thư mục 'public' chứa controller.html (hoặc chỉ cần để controller.html trong thư mục gốc)
-// Nếu bạn muốn truy cập controller.html từ trình duyệt: http://localhost:8182/controller.html
-app.use(express.static(path.join(__dirname, "public"))); 
+app.use(express.static(path.join(__dirname, "public")));
 
 // Store game rooms and their states
 const gameRooms = new Map();
@@ -74,6 +73,23 @@ function initializeRoom(roomId) {
         enableSound: true,
         createdAt: Date.now(),
       },
+      commentConfig: {
+        enabled: false,
+        apiVersion: 'v19.0',
+        liveVideoId: '',
+        accessToken: '',
+        cookie: '',
+        limit: 20,
+        filter: 'toplevel',
+        liveFilter: 'filter_low_quality',
+        order: 'reverse_chronological',
+        summaryFields: ['total_count', 'can_comment'],
+        fields: 'id,message,from{id,name,picture},created_time',
+        pollingInterval: 1000,
+      },
+      commentPolling: null, // Store polling cleanup function
+      seenCommentIds: new Set(),
+      addedPlayerIds: new Set(), // Track unique players to prevent duplicates
       characters: [],
       comments: [],
       reactions: [],
@@ -113,7 +129,7 @@ app.post("/api/room/update-config", (req, res) => {
   const { room, config } = req.body;
   if (!room || !config) return res.json({ status: "ERROR" });
   const roomData = initializeRoom(room);
-  
+
   roomData.config = {
     ...roomData.config,
     ...config,
@@ -141,19 +157,26 @@ app.post("/api/load-comment/ducky", (req, res) => {
   // Cần xử lý các action Game View gửi lên server để lưu lại trạng thái
   switch (action) {
     case ACTIONS.PING_CONTROLLER:
-        // Cập nhật trạng thái game từ Game View
-        roomData.state = data?.state || roomData.state;
-        // Có thể phát lại ping đến Control Panel nếu Control Panel lắng nghe trên kênh onDucky
-        io.to(room).emit('onDucky', { action: ACTIONS.PING_CONTROLLER, data: data });
-        break;
+      // Cập nhật trạng thái game từ Game View
+      roomData.state = data?.state || roomData.state;
+      // Có thể phát lại ping đến Control Panel nếu Control Panel lắng nghe trên kênh onDucky
+      io.to(room).emit('onDucky', { action: ACTIONS.PING_CONTROLLER, data: data });
+      break;
 
     case ACTIONS.CHANGE_GAME_STAGE:
-        roomData.state = data;
-        break;
-        
+      roomData.state = data;
+      // Clear added players when resetting or initializing
+      if (data === GAME_STATES.INIT || data === GAME_STATES.PENDING) {
+        roomData.addedPlayerIds.clear();
+        console.log(`[STATE] Cleared player tracking for state: ${data}`);
+      }
+      // Broadcast state change to all clients
+      io.to(room).emit('game_state_changed', { state: data });
+      break;
+
     case ACTIONS.REPORT_RESULT:
-        // Lưu kết quả game
-        break;
+      // Lưu kết quả game
+      break;
   }
 
   res.json({ status: "SUCCESS" });
@@ -164,13 +187,13 @@ app.post("/api/test/add-comment", (req, res) => {
   const { room, comment: clientComment } = req.body;
   if (!room || !clientComment) return res.json({ status: "ERROR" });
   const roomData = initializeRoom(room);
-  
-  const comment = { 
+
+  const comment = {
     id: `c_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`,
     author: {
-        id: clientComment.author.id || `test_${Date.now()}`,
-        name: clientComment.author.name || 'Test Player',
-        avatar: clientComment.author.avatar || `https://ui-avatars.com/api/?name=${clientComment.author.name}`,
+      id: clientComment.author.id || `test_${Date.now()}`,
+      name: clientComment.author.name || 'Test Player',
+      avatar: clientComment.author.avatar || `https://ui-avatars.com/api/?name=${clientComment.author.name}`,
     },
     platform: clientComment.platform || { name: 'facebook' },
     text: clientComment.text || '',
@@ -178,7 +201,7 @@ app.post("/api/test/add-comment", (req, res) => {
     metadata: clientComment.metadata || {},
   };
   roomData.comments.push(comment);
-  
+
   // Gửi comment đến tất cả client (Game View cần cái này)
   io.to(room).emit("comment", [comment]);
   console.log(`[COMMENT] Added to room ${room}: ${comment.author.name}`);
@@ -189,7 +212,7 @@ app.post("/api/test/add-comment", (req, res) => {
 app.post("/api/test/add-reaction", (req, res) => {
   const { room, author, reaction, metadata } = req.body;
   if (!room || !author || !reaction) return res.json({ status: "ERROR" });
-  
+
   const reactionData = {
     author: { id: author.id }, // Chỉ cần ID để Game View tìm player
     reaction: reaction,
@@ -207,7 +230,9 @@ app.post("/api/test/add-reaction", (req, res) => {
 app.post("/api/room/:room/reset", (req, res) => {
   const { room } = req.params;
   gameRooms.delete(room);
-  initializeRoom(room);
+  const roomData = initializeRoom(room);
+  // Broadcast reset to all clients
+  io.to(room).emit('game_state_changed', { state: roomData.state });
   console.log(`[RESET] Room ${room} reset`);
   res.json({ status: "SUCCESS", message: "Room reset" });
 });
@@ -222,6 +247,204 @@ app.get("/api/report/reportFeature", (req, res) => {
   res.json({ status: "SUCCESS" });
 });
 
+// ✅ 7. API UPDATE COMMENT CONFIG (without auto-start)
+app.post("/api/room/update-comment-config", (req, res) => {
+  const { room, config } = req.body;
+  if (!room || !config) return res.json({ status: "ERROR", message: "Missing room or config" });
+
+  const roomData = initializeRoom(room);
+
+  // Update config (but don't start polling automatically)
+  roomData.commentConfig = {
+    ...roomData.commentConfig,
+    ...config,
+  };
+
+  console.log(`[COMMENT CONFIG] Updated for room ${room}:`, config);
+  res.json({ status: "SUCCESS", config: roomData.commentConfig });
+});
+
+// ✅ 8. API START COMMENT POLLING
+app.post("/api/room/start-comment-polling", (req, res) => {
+  const { room } = req.body;
+  if (!room) return res.json({ status: "ERROR", message: "Missing room" });
+
+  const roomData = initializeRoom(room);
+
+  // Check if required fields are present
+  if (!roomData.commentConfig.liveVideoId || !roomData.commentConfig.accessToken) {
+    return res.json({
+      status: "ERROR",
+      message: "Missing liveVideoId or accessToken. Please save config first."
+    });
+  }
+
+  // Stop existing polling if any
+  if (roomData.commentPolling) {
+    roomData.commentPolling();
+    roomData.commentPolling = null;
+  }
+
+  // Start polling
+  startCommentPolling(room);
+
+  console.log(`[COMMENT POLLING] Started for room ${room}`);
+  res.json({ status: "SUCCESS", message: "Comment polling started" });
+});
+
+// ✅ 9. API STOP COMMENT POLLING
+app.post("/api/room/stop-comment-polling", (req, res) => {
+  const { room } = req.body;
+  if (!room) return res.json({ status: "ERROR", message: "Missing room" });
+
+  const roomData = gameRooms.get(room);
+  if (!roomData) {
+    return res.json({ status: "ERROR", message: "Room not found" });
+  }
+
+  // Stop polling if running
+  if (roomData.commentPolling) {
+    roomData.commentPolling();
+    roomData.commentPolling = null;
+    console.log(`[COMMENT POLLING] Stopped for room ${room}`);
+    res.json({ status: "SUCCESS", message: "Comment polling stopped" });
+  } else {
+    res.json({ status: "SUCCESS", message: "Comment polling was not running" });
+  }
+});
+
+// ✅ 10. API GET COMMENT CONFIG
+app.get("/api/room/:room/comment-config", (req, res) => {
+  const { room } = req.params;
+  const roomData = initializeRoom(room);
+  res.json({ status: "SUCCESS", config: roomData.commentConfig });
+});
+
+// ✅ 11. ROUTE /showcmt - Display comments
+app.get("/showcmt", (req, res) => {
+  res.sendFile(path.join(__dirname, "public", "showcmt.html"));
+});
+
+// Function to start comment polling for a room
+function startCommentPolling(roomId) {
+  const roomData = gameRooms.get(roomId);
+  if (!roomData) return;
+
+  const config = roomData.commentConfig;
+
+  console.log(`[COMMENT POLLING] Starting for room ${roomId}, video: ${config.liveVideoId}`);
+
+  commentsService.pollComments(
+    config,
+    config.pollingInterval || 1000,
+    (comments) => {
+      // Filter only new comments
+      const newComments = comments.filter(comment => {
+        if (roomData.seenCommentIds.has(comment.id)) {
+          return false;
+        }
+        roomData.seenCommentIds.add(comment.id);
+        return true;
+      });
+
+      if (newComments.length > 0) {
+        console.log(`[COMMENT] ${newComments.length} new comment(s) in room ${roomId}`);
+
+        // Transform comments
+        const transformedComments = newComments.map(comment => ({
+          id: comment.id,
+          author: {
+            id: comment.from?.id || 'unknown',
+            name: comment.from?.name || 'Unknown',
+            avatar: comment.from?.picture?.data?.url || '',
+          },
+          platform: { name: 'facebook' },
+          text: comment.message || '',
+          timestamp: new Date(comment.created_time).getTime(),
+          metadata: { created_time: comment.created_time },
+        }));
+
+        // Filter comments based on game state
+        let commentsToAdd = transformedComments;
+
+        // If game is in INIT state, only accept comments with keyword and prevent duplicates
+        if (roomData.state === GAME_STATES.INIT) {
+          const keyword = roomData.config.keyword?.toLowerCase() || '';
+
+          commentsToAdd = transformedComments.filter(comment => {
+            const commentText = comment.text.toLowerCase();
+            const authorId = comment.author.id;
+
+            // Check if comment contains keyword
+            const hasKeyword = commentText.includes(keyword);
+
+            // Check if player already added
+            const isDuplicate = roomData.addedPlayerIds.has(authorId);
+
+            if (hasKeyword && !isDuplicate) {
+              // Add player to tracking set
+              roomData.addedPlayerIds.add(authorId);
+              console.log(`[INIT] Added player: ${comment.author.name} (${authorId})`);
+              return true;
+            } else if (hasKeyword && isDuplicate) {
+              console.log(`[INIT] Rejected duplicate player: ${comment.author.name} (${authorId})`);
+            } else {
+              console.log(`[INIT] Rejected comment without keyword: ${comment.author.name}`);
+            }
+
+            return false;
+          });
+        }
+
+        // Broadcast filtered comments to all clients in room
+        if (commentsToAdd.length > 0) {
+          io.to(roomId).emit("facebook_comment", commentsToAdd);
+
+          // Also add to room's comment array
+          roomData.comments.push(...commentsToAdd);
+
+          console.log(`[COMMENT] Broadcasted ${commentsToAdd.length} comment(s) to room ${roomId}`);
+        }
+      }
+    },
+    (error) => {
+      console.error(`[COMMENT ERROR] Room ${roomId}:`, error.message);
+
+      // Broadcast error as a special system comment to dashboard
+      const errorComment = {
+        id: `error_${Date.now()}`,
+        author: {
+          id: 'system',
+          name: '⚠️ HỆ THỐNG',
+          avatar: 'https://ui-avatars.com/api/?name=System&background=ff0000&color=fff',
+        },
+        platform: { name: 'system' },
+        text: `❌ LỖI POLLING: ${error.message}\n\n🔧 Vui lòng kiểm tra và cập nhật:\n• Access Token\n• Cookie\n• Video ID\n\nClick "Dừng Polling" và cấu hình lại.`,
+        timestamp: Date.now(),
+        metadata: {
+          isError: true,
+          errorType: 'polling_error',
+          originalError: error.message
+        },
+      };
+
+      // Broadcast error comment to dashboard
+      io.to(roomId).emit("facebook_comment", [errorComment]);
+
+      // Stop polling on error
+      if (roomData.commentPolling) {
+        roomData.commentPolling();
+        roomData.commentPolling = null;
+        console.log(`[COMMENT POLLING] Auto-stopped due to error in room ${roomId}`);
+      }
+    }
+  ).then(stopFn => {
+    roomData.commentPolling = stopFn;
+  });
+}
+
+
+
 
 // ============== SOCKET.IO CORE LOGIC ==============
 
@@ -234,7 +457,7 @@ io.on("connection", (socket) => {
       socket.join(roomId);
       const roomData = initializeRoom(roomId);
       roomData.connectedClients.add(socket.id);
-      
+
       // Gửi config khi client join
       setTimeout(() => {
         socket.emit("room.config", {
@@ -255,26 +478,41 @@ io.on("connection", (socket) => {
       // đến TẤT CẢ client trong phòng (io.to(room).emit)
       // để Game View nhận được.
       if ([
-        ACTIONS.INIT_GAME, 
-        ACTIONS.RUN_GAME, 
-        ACTIONS.RESET_GAME, 
-        ACTIONS.SHOW_TOP_WINNERS, 
+        ACTIONS.INIT_GAME,
+        ACTIONS.RUN_GAME,
+        ACTIONS.RESET_GAME,
+        ACTIONS.SHOW_TOP_WINNERS,
         ACTIONS.SHOW_RESULT_LIST,
         ACTIONS.PING_GAME_VIEW // Gửi ping đến Game View
       ].includes(action)) {
-          
-          io.to(room).emit("onDucky", {
-            action: action,
-            data: actionData,
-          });
-          console.log(`[CONTROL] 📡 Broadcasted action: ${action} to room ${room}`);
+
+        io.to(room).emit("onDucky", {
+          action: action,
+          data: actionData,
+        });
+        console.log(`[CONTROL] 📡 Broadcasted action: ${action} to room ${room}`);
       } else {
-          // Các action khác (như GET_ACTION từ Game View) chỉ cần gửi đến các client khác
-          socket.to(room).emit("onDucky", {
-              action: action,
-              data: actionData,
-          });
+        // Các action khác (như GET_ACTION từ Game View) chỉ cần gửi đến các client khác
+        socket.to(room).emit("onDucky", {
+          action: action,
+          data: actionData,
+        });
       }
+
+      if (callback) callback(null);
+    }
+
+    // Handle pin/unpin comment events
+    if (endpoint === "pin.comment") {
+      const { room, commentId, pinned } = data;
+
+      // Broadcast to all clients in room (including showcmt)
+      io.to(room).emit("pin_comment", {
+        commentId: commentId,
+        pinned: pinned
+      });
+
+      console.log(`[PIN] Broadcasted pin event for comment ${commentId} (pinned: ${pinned}) to room ${room}`);
 
       if (callback) callback(null);
     }
