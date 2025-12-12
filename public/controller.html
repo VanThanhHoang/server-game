@@ -557,6 +557,61 @@
     .players-added-section div {
       font-size: 10px;
     }
+
+    .player-list-container {
+      max-height: 200px;
+      overflow-y: auto;
+      margin-top: 8px;
+      background: white;
+      border-radius: 4px;
+      padding: 8px;
+    }
+
+    .player-list-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px;
+      border-bottom: 1px solid #e0e0e0;
+      font-size: 11px;
+    }
+
+    .player-list-item:last-child {
+      border-bottom: none;
+    }
+
+    .player-list-avatar {
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+
+    .player-list-name {
+      flex: 1;
+      color: #333;
+      font-weight: 500;
+    }
+
+    .player-list-empty {
+      text-align: center;
+      color: #999;
+      padding: 12px;
+      font-size: 11px;
+    }
+
+    .player-list-container::-webkit-scrollbar {
+      width: 4px;
+    }
+
+    .player-list-container::-webkit-scrollbar-track {
+      background: #f1f1f1;
+    }
+
+    .player-list-container::-webkit-scrollbar-thumb {
+      background: #888;
+      border-radius: 2px;
+    }
   </style>
 </head>
 
@@ -627,6 +682,9 @@
         <strong>Phòng:</strong> <span id="roomIdDisplay">-</span><br>
         <strong>Từ khóa:</strong> <span id="keywordDisplay">-</span>
       </div>
+      <div class="player-list-container" id="addedPlayersList">
+        <div class="player-list-empty">Chưa có người chơi</div>
+      </div>
     </div>
   </div>
 
@@ -651,10 +709,12 @@
       <div class="form-group">
         <label>Chủ đề:</label>
         <select id="theme">
+
           <!-- <option value="duck">Vịt 🦆</option>
-          <option value="horse">Ngựa 🐴</option>
+
           <option value="cow">Bò 🐄</option> -->
-          <option value="unicorn">Kỳ Lân 🦄</option>
+          <option value="unicorn">Tuần lộc 🦄</option>
+          <option value="horse">Ngựa 🐴</option>
           <!-- <option value="car">Xe Hơi 🚗</option>
           <option value="bear">Gấu 🐻</option> -->
         </select>
@@ -813,12 +873,14 @@
       count: 0
     };
     let playersAddedCount = 0;
-
+    let addedPlayersList = [];
     // Socket connection
     socket.on('connect', () => {
       updateStatus(true);
       addLog('Đã kết nối đến server', 'success');
       subscribeToRoom();
+      // Initialize with PENDING state
+      updateGameStateVisualization('pending');
     });
 
     socket.on('disconnect', () => {
@@ -870,7 +932,8 @@
     let pinnedComments = new Set();
 
     socket.on('facebook_comment', (comments) => {
-      console.log('Received Facebook comments:', comments);
+      console.log('📥 Received Facebook comments:', comments);
+      console.log('🎮 Current game state:', gameState.state);
 
       // Add new comments to the list
       comments.forEach(comment => {
@@ -879,14 +942,42 @@
         if (!exists) {
           allComments.unshift(comment); // Add to beginning
 
-          // If game is in INIT state and comment is not an error, increment player count
-          if (gameState.state === 'init' && !comment.metadata?.isError) {
-            playersAddedCount++;
-            updateGameInfo();
-            addLog(`✅ Đã thêm người chơi: ${comment.author.name}`, 'success');
+          console.log('💬 Processing comment:', {
+            name: comment.author.name,
+            text: comment.text,
+            isError: comment.metadata?.isError,
+            gameState: gameState.state
+          });
+
+          // If server marked this as a player comment (passed keyword filter in INIT state)
+          if (comment.metadata?.isPlayerComment && !comment.metadata?.isError) {
+            // Check if player already exists by author.id (safety check)
+            const playerExists = addedPlayersList.some(p => p.id === comment.author.id);
+
+            if (!playerExists) {
+              playersAddedCount++;
+              // Add to player list
+              addedPlayersList.push({
+                id: comment.author.id,
+                name: comment.author.name,
+                avatar: comment.author.avatar
+              });
+              console.log('✅ Added to player list:', comment.author.name);
+              console.log('📊 Total players:', playersAddedCount);
+              console.log('📋 Player list:', addedPlayersList);
+              updateGameInfo();
+              updatePlayerListDisplay();
+              addLog(`✅ Đã thêm người chơi: ${comment.author.name}`, 'success');
+            } else {
+              console.log('⚠️ Player already exists, skipping:', comment.author.name, comment.author.id);
+              addLog(`⚠️ Người chơi đã tồn tại: ${comment.author.name}`, 'warning');
+            }
           } else {
+            console.log('ℹ️ Not a player comment - isPlayerComment:', comment.metadata?.isPlayerComment, 'isError:', comment.metadata?.isError);
             addLog(`💬 Comment mới từ ${comment.author.name}`, 'success');
           }
+        } else {
+          console.log('⚠️ Duplicate comment, skipping:', comment.id);
         }
       });
 
@@ -1036,6 +1127,25 @@
       document.getElementById('keywordDisplay').textContent = document.getElementById('keyword').value || '-';
     }
 
+    function updatePlayerListDisplay() {
+      const container = document.getElementById('addedPlayersList');
+
+      if (addedPlayersList.length === 0) {
+        container.innerHTML = '<div class="player-list-empty">Chưa có người chơi</div>';
+        return;
+      }
+
+      container.innerHTML = addedPlayersList.map(player => `
+        <div class="player-list-item">
+          <img src="${player.avatar || 'https://ui-avatars.com/api/?name=' + encodeURIComponent(player.name)}" 
+               class="player-list-avatar" 
+               alt="${player.name}"
+               onerror="this.src='https://ui-avatars.com/api/?name=${encodeURIComponent(player.name)}'">
+          <span class="player-list-name">${player.name}</span>
+        </div>
+      `).join('');
+    }
+
     function updateGameStateVisualization(state) {
       // Remove active class from all indicators
       document.querySelectorAll('.state-indicator').forEach(indicator => {
@@ -1148,7 +1258,9 @@
         sendAction('resetGame');
         addLog('Gửi lệnh reset game', 'info');
         playersAddedCount = 0;
+        addedPlayersList = []; // Clear player list
         updateGameInfo();
+        updatePlayerListDisplay();
 
         // Gọi API để xóa dữ liệu trên Server (tùy chọn)
         fetch(`${API_BASE_URL}/api/room/${currentRoomId}/reset`, { method: 'POST' });

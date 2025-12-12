@@ -13,7 +13,7 @@ class FacebookCommentsService {
 
         // Add optional parameters
         if (config.filter) {
-            params.append('filter', config.filter);
+            params.append('filter', 'toplevel');
         }
 
         if (config.liveFilter) {

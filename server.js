@@ -136,11 +136,18 @@ app.post("/api/room/update-config", (req, res) => {
     createdAt: Date.now(), // Cập nhật timestamp để Game View load lại
   };
 
+  // Change state to SAVED_SETTINGS when config is saved
+  roomData.state = GAME_STATES.SAVED_SETTINGS;
+  console.log(`[CONFIG] State changed to SAVED_SETTINGS for room ${room}`);
+
   // Gửi config mới ngay lập tức qua WebSocket
   io.to(room).emit("room.config", {
     key: "hGame",
     config: roomData.config,
   });
+
+  // Broadcast state change
+  io.to(room).emit('game_state_changed', { state: GAME_STATES.SAVED_SETTINGS });
 
   console.log(`[CONFIG UPDATE] Room ${room}:`, config);
 
@@ -364,46 +371,61 @@ function startCommentPolling(roomId) {
           metadata: { created_time: comment.created_time },
         }));
 
-        // Filter comments based on game state
-        let commentsToAdd = transformedComments;
+        // Mark player comments based on game state
+        console.log(`[FILTER] Current game state: ${roomData.state}`);
 
-        // If game is in INIT state, only accept comments with keyword and prevent duplicates
+        // If game is in INIT state, mark comments that should add players
         if (roomData.state === GAME_STATES.INIT) {
           const keyword = roomData.config.keyword?.toLowerCase() || '';
+          console.log(`[FILTER] INIT mode active, marking player comments by keyword: "${keyword}"`);
 
-          commentsToAdd = transformedComments.filter(comment => {
+          transformedComments.forEach(comment => {
             const commentText = comment.text.toLowerCase();
             const authorId = comment.author.id;
 
             // Check if comment contains keyword
-            const hasKeyword = commentText.includes(keyword);
+            const hasKeyword = keyword ? commentText.includes(keyword) : true;
 
             // Check if player already added
             const isDuplicate = roomData.addedPlayerIds.has(authorId);
 
+            console.log(`[FILTER] Comment from ${comment.author.name}: text="${comment.text}", hasKeyword=${hasKeyword}, isDuplicate=${isDuplicate}`);
+
             if (hasKeyword && !isDuplicate) {
               // Add player to tracking set
               roomData.addedPlayerIds.add(authorId);
-              console.log(`[INIT] Added player: ${comment.author.name} (${authorId})`);
-              return true;
+              // Mark this comment as a player comment
+              comment.metadata.isPlayerComment = true;
+              console.log(`[INIT] ✅ Marked as player comment: ${comment.author.name} (${authorId})`);
             } else if (hasKeyword && isDuplicate) {
-              console.log(`[INIT] Rejected duplicate player: ${comment.author.name} (${authorId})`);
+              console.log(`[INIT] ❌ Duplicate player: ${comment.author.name} (${authorId})`);
             } else {
-              console.log(`[INIT] Rejected comment without keyword: ${comment.author.name}`);
+              console.log(`[INIT] ℹ️ Regular comment (no keyword): ${comment.author.name}`);
             }
-
-            return false;
           });
         }
 
-        // Broadcast filtered comments to all clients in room
-        if (commentsToAdd.length > 0) {
-          io.to(roomId).emit("facebook_comment", commentsToAdd);
+        // Broadcast ALL comments to dashboard/showcmt
+        if (transformedComments.length > 0) {
+          // Debug: log room and socket info
+          const socketRoom = io.sockets.adapter.rooms.get(roomId);
+          console.log(`[DEBUG] Broadcasting to room: ${roomId}`);
+          console.log(`[DEBUG] Clients in room: ${socketRoom ? socketRoom.size : 0}`);
+
+          // Emit ALL comments to dashboard/showcmt (uses facebook_comment event)
+          io.to(roomId).emit("facebook_comment", transformedComments);
+
+          // Emit only player comments to game view (uses comment event)
+          const playerComments = transformedComments.filter(c => c.metadata?.isPlayerComment);
+          if (playerComments.length > 0) {
+            io.to(roomId).emit("comment", playerComments);
+            console.log(`[COMMENT] ✅ Sent ${playerComments.length} player comment(s) to game`);
+          }
 
           // Also add to room's comment array
-          roomData.comments.push(...commentsToAdd);
+          roomData.comments.push(...transformedComments);
 
-          console.log(`[COMMENT] Broadcasted ${commentsToAdd.length} comment(s) to room ${roomId}`);
+          console.log(`[COMMENT] ✅ Broadcasted ${transformedComments.length} comment(s) to dashboard, ${playerComments.length} to game`);
         }
       }
     },
@@ -485,6 +507,26 @@ io.on("connection", (socket) => {
         ACTIONS.SHOW_RESULT_LIST,
         ACTIONS.PING_GAME_VIEW // Gửi ping đến Game View
       ].includes(action)) {
+
+        // Handle state changes for control actions
+        const roomData = gameRooms.get(room);
+        if (roomData) {
+          if (action === ACTIONS.INIT_GAME) {
+            roomData.state = GAME_STATES.INIT;
+            roomData.addedPlayerIds.clear();
+            console.log(`[INIT_GAME] Game state set to INIT, cleared player tracking`);
+            io.to(room).emit('game_state_changed', { state: GAME_STATES.INIT });
+          } else if (action === ACTIONS.RUN_GAME) {
+            roomData.state = GAME_STATES.PLAYING;
+            console.log(`[RUN_GAME] Game state set to PLAYING`);
+            io.to(room).emit('game_state_changed', { state: GAME_STATES.PLAYING });
+          } else if (action === ACTIONS.RESET_GAME) {
+            roomData.state = GAME_STATES.PENDING;
+            roomData.addedPlayerIds.clear();
+            console.log(`[RESET_GAME] Game state set to PENDING, cleared player tracking`);
+            io.to(room).emit('game_state_changed', { state: GAME_STATES.PENDING });
+          }
+        }
 
         io.to(room).emit("onDucky", {
           action: action,
