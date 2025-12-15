@@ -377,7 +377,7 @@ body {
     right: 10px;
     width: 80px;
     height: 80px;
-    background-image: url('http://localhost:8182/assets/HANA_Logo.png');
+    background-image: url('https://server-game-zk1e.onrender.com/assets/HANA_Logo.png');
     background-size: contain;
     background-repeat: no-repeat;
     animation: snowfall 4s ease-in-out infinite;
