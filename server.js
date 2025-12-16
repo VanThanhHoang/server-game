@@ -67,7 +67,7 @@ function initializeRoom(roomId) {
         winnersCount: 3,
         maxCharacters: 50,
         scoresForLike: 1,
-        scoresForComment: 5,
+        scoresForComment: 60,
         scoresForCent: 20,
         volume: 50,
         enableSound: true,
