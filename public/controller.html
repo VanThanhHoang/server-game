@@ -729,6 +729,7 @@
         <label>Chế độ chơi:</label>
         <select id="mode">
           <option value="random">Ngẫu nhiên</option>
+          <option value="score">Hybrid (Kết hợp)</option>
         </select>
       </div>
 
@@ -865,7 +866,9 @@
 
   <script src="/socket.io/socket.io.js"></script>
   <script>
-    const API_BASE_URL = 'https://server-game-zk1e.onrender.com';
+    const base = `http://localhost:8182`
+    const base2 = `https://server-game-zk1e.onrender.com`
+    const API_BASE_URL = base2;
     const socket = io(API_BASE_URL);
     let currentRoomId = document.getElementById('inputRoomId').value;
     let gameState = {
@@ -1204,7 +1207,7 @@
         volume: parseInt(document.getElementById('volume').value),
         enableSound: document.getElementById('enableSound').checked,
         scoresForLike: 1,
-        scoresForComment: 5,
+        scoresForComment: 60,
         scoresForCent: 20
       };
 
