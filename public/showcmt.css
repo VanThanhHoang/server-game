@@ -105,7 +105,7 @@ body {
     position: absolute;
     bottom: -5px;
     right: -5px;
-    font-size: 20px;
+    font-size: 22px;
     animation: sparkle 1.5s ease-in-out infinite;
     z-index: 10;
 }
@@ -115,7 +115,7 @@ body {
     position: absolute;
     top: -8px;
     left: -8px;
-    font-size: 18px;
+    font-size: 12px;
     animation: snowfall 3s ease-in-out infinite;
     z-index: 10;
 }
@@ -123,7 +123,7 @@ body {
 .comment.pinned .avt {
     width: 60px;
     height: 60px;
-    border: 3px solid #38bdf8;
+    border: 3px solid #eabb38;
     box-shadow: 0 4px 12px rgba(56, 189, 248, 0.3);
 }
 
@@ -139,16 +139,16 @@ body {
 }
 
 .comment.pinned .comment-name {
-    font-size: 15px;
+    font-size: 20px;
     font-weight: 900;
     color: #0284c7;
     text-shadow: 1px 1px 2px rgba(2, 132, 199, 0.1);
 }
 
 .comment.pinned .comment-message {
-    font-size: 14px;
+    font-size: 20px;
     font-weight: 700;
-    color: #0c4a6e;
+    color: #eabb38;
     line-height: 1.5;
 }
 
@@ -234,7 +234,7 @@ body {
 
 .comment-name {
     font-weight: 800;
-    font-size: 12px;
+    font-size: 18px;
     color: #bb051f;
 }
 
@@ -245,12 +245,12 @@ body {
 }
 
 .comment-message {
-    font-size: 13px;
+    font-size: 17px;
     line-height: 1.4;
     color: #3f8f29;
     word-wrap: break-word;
     margin-bottom: 4px;
-    font-weight: 600
+    font-weight: 700
 }
 
 .comment-time {
