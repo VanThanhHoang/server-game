@@ -59,6 +59,7 @@ function initializeRoom(roomId) {
     gameRooms.set(roomId, {
       id: roomId,
       state: GAME_STATES.PENDING,
+      gameStartTimestamp: null, // Timestamp when game starts PLAYING
       config: {
         theme: "unicorn", // Default theme
         keyword: "hanagold",
@@ -175,7 +176,11 @@ app.post("/api/load-comment/ducky", (req, res) => {
       // Clear added players when resetting or initializing
       if (data === GAME_STATES.INIT || data === GAME_STATES.PENDING) {
         roomData.addedPlayerIds.clear();
+        roomData.gameStartTimestamp = null; // Reset timestamp
         console.log(`[STATE] Cleared player tracking for state: ${data}`);
+      } else if (data === GAME_STATES.PLAYING) {
+        roomData.gameStartTimestamp = Date.now(); // Save start time
+        console.log(`[STATE] Game PLAYING, timestamp: ${roomData.gameStartTimestamp}`);
       }
       // Broadcast state change to all clients
       io.to(room).emit('game_state_changed', { state: data });
@@ -408,19 +413,26 @@ function startCommentPolling(roomId) {
         // If game is PLAYING in SCORE mode, mark comments from existing players for scoring
         else if (roomData.state === GAME_STATES.PLAYING && roomData.config.mode === 'score') {
           console.log(`[FILTER] PLAYING + SCORE mode active, marking comments from existing players`);
+          console.log(`[FILTER] Game start timestamp: ${roomData.gameStartTimestamp}`);
 
           transformedComments.forEach(comment => {
             const authorId = comment.author.id;
+            const commentTimestamp = comment.timestamp;
 
             // Check if this author is already a player in the game
             const isExistingPlayer = roomData.addedPlayerIds.has(authorId);
 
-            console.log(`[FILTER] Comment from ${comment.author.name} (${authorId}): isExistingPlayer=${isExistingPlayer}`);
+            // Check if comment was created AFTER game started
+            const isAfterGameStart = roomData.gameStartTimestamp && commentTimestamp > roomData.gameStartTimestamp;
 
-            if (isExistingPlayer) {
-              // Mark this comment for score addition
+            console.log(`[FILTER] Comment from ${comment.author.name} (${authorId}): isExistingPlayer=${isExistingPlayer}, commentTime=${commentTimestamp}, gameStart=${roomData.gameStartTimestamp}, isAfterStart=${isAfterGameStart}`);
+
+            if (isExistingPlayer && isAfterGameStart) {
+              // Mark this comment for score addition ONLY if it's after game start
               comment.metadata.isPlayerComment = true;
-              console.log(`[PLAYING] ✅ Marked for scoring: ${comment.author.name} (${authorId})`);
+              console.log(`[PLAYING] ✅ Marked for scoring: ${comment.author.name} (${authorId}) - comment sent AFTER game start`);
+            } else if (isExistingPlayer && !isAfterGameStart) {
+              console.log(`[PLAYING] ⏰ Skipped old comment: ${comment.author.name} (${authorId}) - comment sent BEFORE game start`);
             } else {
               console.log(`[PLAYING] ℹ️ Comment from non-player: ${comment.author.name}`);
             }
@@ -536,15 +548,18 @@ io.on("connection", (socket) => {
           if (action === ACTIONS.INIT_GAME) {
             roomData.state = GAME_STATES.INIT;
             roomData.addedPlayerIds.clear();
+            roomData.gameStartTimestamp = null; // Reset timestamp
             console.log(`[INIT_GAME] Game state set to INIT, cleared player tracking`);
             io.to(room).emit('game_state_changed', { state: GAME_STATES.INIT });
           } else if (action === ACTIONS.RUN_GAME) {
             roomData.state = GAME_STATES.PLAYING;
-            console.log(`[RUN_GAME] Game state set to PLAYING`);
+            roomData.gameStartTimestamp = Date.now(); // Save start time
+            console.log(`[RUN_GAME] Game state set to PLAYING, timestamp: ${roomData.gameStartTimestamp}`);
             io.to(room).emit('game_state_changed', { state: GAME_STATES.PLAYING });
           } else if (action === ACTIONS.RESET_GAME) {
             roomData.state = GAME_STATES.PENDING;
             roomData.addedPlayerIds.clear();
+            roomData.gameStartTimestamp = null; // Reset timestamp
             console.log(`[RESET_GAME] Game state set to PENDING, cleared player tracking`);
             io.to(room).emit('game_state_changed', { state: GAME_STATES.PENDING });
           }
