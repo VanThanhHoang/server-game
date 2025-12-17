@@ -372,7 +372,7 @@ function startCommentPolling(roomId) {
         }));
 
         // Mark player comments based on game state
-        console.log(`[FILTER] Current game state: ${roomData.state}`);
+        console.log(`[FILTER] Current game state: ${roomData.state}, mode: ${roomData.config.mode}`);
 
         // If game is in INIT state, mark comments that should add players
         if (roomData.state === GAME_STATES.INIT) {
@@ -401,6 +401,28 @@ function startCommentPolling(roomId) {
               console.log(`[INIT] ❌ Duplicate player: ${comment.author.name} (${authorId})`);
             } else {
               console.log(`[INIT] ℹ️ Regular comment (no keyword): ${comment.author.name}`);
+            }
+          });
+        }
+
+        // If game is PLAYING in SCORE mode, mark comments from existing players for scoring
+        else if (roomData.state === GAME_STATES.PLAYING && roomData.config.mode === 'score') {
+          console.log(`[FILTER] PLAYING + SCORE mode active, marking comments from existing players`);
+
+          transformedComments.forEach(comment => {
+            const authorId = comment.author.id;
+
+            // Check if this author is already a player in the game
+            const isExistingPlayer = roomData.addedPlayerIds.has(authorId);
+
+            console.log(`[FILTER] Comment from ${comment.author.name} (${authorId}): isExistingPlayer=${isExistingPlayer}`);
+
+            if (isExistingPlayer) {
+              // Mark this comment for score addition
+              comment.metadata.isPlayerComment = true;
+              console.log(`[PLAYING] ✅ Marked for scoring: ${comment.author.name} (${authorId})`);
+            } else {
+              console.log(`[PLAYING] ℹ️ Comment from non-player: ${comment.author.name}`);
             }
           });
         }
